@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"c:\\\\Users\\\\ADMIN\\\\investiq\\\\services\\\\auth-service\" -Recurse | Where-Object { -not $_.PSIsContainer } | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\(\"c:\\\\Users\\\\ADMIN\\\\investiq\\\\services\\\\auth-service\\\\\", \"\"\\) })",
+      "PowerShell(mvn --version 2>&1)",
+      "PowerShell(docker --version 2>&1)",
+      "PowerShell(docker context ls 2>&1)",
+      "PowerShell(docker --context default build -t investiq/auth-service:latest \"c:\\\\Users\\\\ADMIN\\\\investiq\\\\services\\\\auth-service\" 2>&1)",
+      "PowerShell(java -version 2>&1)",
+      "PowerShell(Get-Command mvn -ErrorAction SilentlyContinue)"
+    ]
+  }
+}

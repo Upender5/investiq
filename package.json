@@ -1,0 +1,21 @@
+{
+  "name": "investiq",
+  "version": "1.0.0",
+  "description": "AI-powered investment app for Indian college students. Monorepo with Java (Spring Boot) microservices + Python (FastAPI) AI services.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Upender5/investiq.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Upender5/investiq/issues"
+  },
+  "homepage": "https://github.com/Upender5/investiq#readme"
+}

@@ -1,0 +1,32 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "InvestIQ Local",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "investiq",
+      "Username": "investiq",
+      "SSLMode": "prefer",
+      "Comment": "Local dev PostgreSQL (TimescaleDB). Password prompted on first connect."
+    },
+    "2": {
+      "Name": "investiq_auth",
+      "Group": "Service DBs",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "investiq_auth",
+      "Username": "investiq",
+      "SSLMode": "prefer"
+    },
+    "3": {
+      "Name": "investiq_market",
+      "Group": "Service DBs",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "investiq_market",
+      "Username": "investiq",
+      "SSLMode": "prefer"
+    }
+  }
+}

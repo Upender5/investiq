@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/investiq_auth}
+    username: ${DB_USERNAME:investiq}
+    password: ${DB_PASSWORD:investiq}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-to-a-256-bit-base64-secret-in-prod}
+    access-token-expiry-ms: ${JWT_ACCESS_EXPIRY_MS:900000}       # 15 min
+    refresh-token-expiry-ms: ${JWT_REFRESH_EXPIRY_MS:604800000}  # 7 days
+  otp:
+    expiry-seconds: ${OTP_EXPIRY_SECONDS:300}  # 5 min
+    length: 6
+  sms:
+    provider: ${SMS_PROVIDER:logging}   # logging (dev) | msg91 (prod)
+    msg91:
+      auth-key: ${MSG91_AUTH_KEY:}
+      template-id: ${MSG91_TEMPLATE_ID:}

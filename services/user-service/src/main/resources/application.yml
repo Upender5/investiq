@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: user-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/investiq_users}
+    username: ${DB_USERNAME:investiq}
+    password: ${DB_PASSWORD:investiq}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: 8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  jwt:
+    # Must match the secret used by auth-service to sign tokens
+    secret: ${JWT_SECRET:change-me-to-a-256-bit-base64-secret-in-prod}

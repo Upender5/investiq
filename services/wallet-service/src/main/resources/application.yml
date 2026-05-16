@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: wallet-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/investiq_wallet}
+    username: ${DB_USERNAME:investiq}
+    password: ${DB_PASSWORD:investiq}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all          # wait for all ISR replicas to ack
+      retries: 3
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 1
+        spring.json.add.type.headers: false
+
+server:
+  port: 8084
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-to-a-256-bit-base64-secret-in-prod}
+  kafka:
+    topics:
+      trade-funded: trade.funded
