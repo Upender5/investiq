@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: investiq-config
+  namespace: investiq
+data:
+  KAFKA_TOPICS_TRADE_FUNDED: "trade.funded"
+  KAFKA_TOPICS_TRADE_EXECUTED: "trade.executed"
+  MARKET_PROVIDER: "mock"
+  SMS_PROVIDER: "logging"
+  CLAUDE_MODEL: "claude-sonnet-4-6"
+  TZ: "Asia/Kolkata"
+  REDIS_PORT: "6379"
+  FCM_ENABLED: "false"

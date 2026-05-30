@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "InvestIQ",
+    "slug": "investiq",
+    "version": "1.0.0",
+    "scheme": "investiq",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": { "resizeMode": "contain", "backgroundColor": "#0f172a" },
+    "ios": { "supportsTablet": false },
+    "android": { "adaptiveIcon": { "backgroundColor": "#0f172a" } },
+    "plugins": ["expo-router"]
+  }
+}

@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-scoring-service
+  namespace: investiq
+  labels:
+    app: ml-scoring-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ml-scoring-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ml-scoring-service
+    spec:
+      containers:
+        - name: ml-scoring-service
+          image: <AWS_ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com/investiq/ml-scoring-service:latest
+          ports:
+            - containerPort: 9002
+          envFrom:
+            - secretRef:
+                name: investiq-secrets
+            - configMapRef:
+                name: investiq-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9002
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9002
+            initialDelaySeconds: 15
+            periodSeconds: 10

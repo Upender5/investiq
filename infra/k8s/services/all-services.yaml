@@ -1,0 +1,120 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: investiq
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: investiq
+spec:
+  selector:
+    app: user-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trade-service
+  namespace: investiq
+spec:
+  selector:
+    app: trade-service
+  ports:
+    - port: 8083
+      targetPort: 8083
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wallet-service
+  namespace: investiq
+spec:
+  selector:
+    app: wallet-service
+  ports:
+    - port: 8084
+      targetPort: 8084
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: market-data-service
+  namespace: investiq
+spec:
+  selector:
+    app: market-data-service
+  ports:
+    - port: 8085
+      targetPort: 8085
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: investiq
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - port: 8086
+      targetPort: 8086
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-advisor
+  namespace: investiq
+spec:
+  selector:
+    app: ai-advisor
+  ports:
+    - port: 9001
+      targetPort: 9001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-scoring-service
+  namespace: investiq
+spec:
+  selector:
+    app: ml-scoring-service
+  ports:
+    - port: 9002
+      targetPort: 9002
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service
+  namespace: investiq
+spec:
+  selector:
+    app: analytics-service
+  ports:
+    - port: 9003
+      targetPort: 9003
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: background-jobs
+  namespace: investiq
+spec:
+  selector:
+    app: background-jobs
+  ports:
+    - port: 9004
+      targetPort: 9004

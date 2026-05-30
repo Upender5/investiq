@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: market-data-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+server:
+  port: 8085
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-to-a-256-bit-base64-secret-in-prod}
+  market:
+    provider: ${MARKET_PROVIDER:mock}
+    kite:
+      api-key: ${KITE_API_KEY:}
+      access-token: ${KITE_ACCESS_TOKEN:}
+      base-url: https://api.kite.trade
+    cache:
+      quote-ttl-seconds: 15
+      ohlcv-ttl-seconds: 3600

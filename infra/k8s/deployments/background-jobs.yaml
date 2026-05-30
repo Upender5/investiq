@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: background-jobs
+  namespace: investiq
+  labels:
+    app: background-jobs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: background-jobs
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: background-jobs
+    spec:
+      containers:
+        - name: background-jobs
+          image: <AWS_ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com/investiq/background-jobs:latest
+          ports:
+            - containerPort: 9004
+          envFrom:
+            - secretRef:
+                name: investiq-secrets
+            - configMapRef:
+                name: investiq-config
+          env:
+            - name: MARKET_DATA_SERVICE_URL
+              value: "http://market-data-service.investiq.svc.cluster.local:8085"
+            - name: NOTIFICATION_SERVICE_URL
+              value: "http://notification-service.investiq.svc.cluster.local:8086"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9004
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9004
+            initialDelaySeconds: 15
+            periodSeconds: 10

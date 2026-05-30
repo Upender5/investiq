@@ -7,7 +7,12 @@
       "PowerShell(docker context ls 2>&1)",
       "PowerShell(docker --context default build -t investiq/auth-service:latest \"c:\\\\Users\\\\ADMIN\\\\investiq\\\\services\\\\auth-service\" 2>&1)",
       "PowerShell(java -version 2>&1)",
-      "PowerShell(Get-Command mvn -ErrorAction SilentlyContinue)"
+      "PowerShell(Get-Command mvn -ErrorAction SilentlyContinue)",
+      "PowerShell(docker --version)",
+      "PowerShell(docker-compose --version 2>$null)",
+      "PowerShell(docker compose version 2>$null)",
+      "mcp__mcp-registry__search_mcp_registry",
+      "PowerShell(Get-ChildItem C:\\\\Users\\\\ADMIN\\\\investiq\\\\services | ForEach-Object { $name = $_.Name; $hasMain = Test-Path \"$\\($_.FullName\\)\\\\src\\\\main\\\\java\" -o \\(Test-Path \"$\\($_.FullName\\)\\\\app\\\\main.py\"\\); \"$name : $hasMain\" })"
     ]
   }
 }
