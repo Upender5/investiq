@@ -16,7 +16,7 @@ export function Table({ className, children, ...props }: HTMLAttributes<HTMLTabl
 
 export function TableHead({ className, children, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead className={twMerge("border-b border-slate-700", className)} {...props}>
+    <thead className={twMerge("border-b border-border", className)} {...props}>
       {children}
     </thead>
   );
@@ -24,7 +24,7 @@ export function TableHead({ className, children, ...props }: HTMLAttributes<HTML
 
 export function TableBody({ className, children, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <tbody className={twMerge("divide-y divide-slate-700/50", className)} {...props}>
+    <tbody className={twMerge("divide-y divide-border/60", className)} {...props}>
       {children}
     </tbody>
   );
@@ -33,7 +33,7 @@ export function TableBody({ className, children, ...props }: HTMLAttributes<HTML
 export function TableRow({ className, children, ...props }: HTMLAttributes<HTMLTableRowElement>) {
   return (
     <tr
-      className={twMerge("transition-colors hover:bg-slate-700/30", className)}
+      className={twMerge("transition-colors hover:bg-accent/60", className)}
       {...props}
     >
       {children}
@@ -45,7 +45,7 @@ export function TableHeader({ className, children, ...props }: ThHTMLAttributes<
   return (
     <th
       className={twMerge(
-        "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400",
+        "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground",
         className
       )}
       {...props}
@@ -58,7 +58,7 @@ export function TableHeader({ className, children, ...props }: ThHTMLAttributes<
 export function TableCell({ className, children, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <td
-      className={twMerge("px-4 py-3 text-slate-300", className)}
+      className={twMerge("px-4 py-3 text-foreground/80", className)}
       {...props}
     >
       {children}

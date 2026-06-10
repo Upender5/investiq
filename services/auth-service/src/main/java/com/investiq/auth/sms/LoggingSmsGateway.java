@@ -12,5 +12,9 @@ public class LoggingSmsGateway implements SmsGateway {
     @Override
     public void sendOtp(String phone, String otp) {
         log.warn("[DEV] OTP for {}: {} — replace app.sms.provider=logging with msg91 in prod", phone, otp);
+        System.out.println("========================================");
+        System.out.println("  [DEV OTP]  Phone: " + phone);
+        System.out.println("  [DEV OTP]  Code : " + otp);
+        System.out.println("========================================");
     }
 }

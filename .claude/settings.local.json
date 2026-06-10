@@ -12,7 +12,26 @@
       "PowerShell(docker-compose --version 2>$null)",
       "PowerShell(docker compose version 2>$null)",
       "mcp__mcp-registry__search_mcp_registry",
-      "PowerShell(Get-ChildItem C:\\\\Users\\\\ADMIN\\\\investiq\\\\services | ForEach-Object { $name = $_.Name; $hasMain = Test-Path \"$\\($_.FullName\\)\\\\src\\\\main\\\\java\" -o \\(Test-Path \"$\\($_.FullName\\)\\\\app\\\\main.py\"\\); \"$name : $hasMain\" })"
+      "PowerShell(Get-ChildItem C:\\\\Users\\\\ADMIN\\\\investiq\\\\services | ForEach-Object { $name = $_.Name; $hasMain = Test-Path \"$\\($_.FullName\\)\\\\src\\\\main\\\\java\" -o \\(Test-Path \"$\\($_.FullName\\)\\\\app\\\\main.py\"\\); \"$name : $hasMain\" })",
+      "PowerShell(node --version 2>$null)",
+      "PowerShell(npm --version 2>$null)",
+      "PowerShell(java --version 2>$null)",
+      "PowerShell(python --version 2>$null)",
+      "PowerShell(docker --version 2>$null)",
+      "PowerShell(docker --version 2>$null; Write-Host \"Exit: $LASTEXITCODE\")",
+      "PowerShell(Get-ChildItem C:\\\\Users\\\\kudur\\\\investiq\\\\services\\\\auth-service\\\\src -Recurse | Select-Object FullName | Where-Object { $_.FullName -match \"migration|flyway|liquibase|schema|init\" })",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(Start-Sleep -Seconds 8)",
+      "Bash(Invoke-WebRequest -Uri \"http://localhost:3000\" -UseBasicParsing -TimeoutSec 5)",
+      "Bash(Select-Object -First 3)",
+      "Bash(Get-ChildItem -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\kudur\\\\investiq\" -Directory)",
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(Get-ChildItem -Recurse -Directory -Name)",
+      "PowerShell(Get-ChildItem -Directory; Get-ChildItem admin-dashboard -Recurse -Depth 2 -File | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\(\"C:\\\\Users\\\\kudur\\\\investiq\\\\\", \"\"\\) } | Where-Object { $_ -notmatch \"node_modules|\\\\.next\" })"
     ]
   }
 }

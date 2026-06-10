@@ -1,0 +1,340 @@
+# ============================================================
+# InvestIQ :: Kafka Topic Design
+# Part 9 of Enterprise DB Architecture
+# Broker: AWS MSK 3.7  (3 brokers, ap-south-1a/b/c)
+# ============================================================
+
+kafka:
+  bootstrap_servers: "${KAFKA_BOOTSTRAP_SERVERS}"
+  security_protocol: SASL_SSL
+  sasl_mechanism: AWS_MSK_IAM
+  schema_registry: "${SCHEMA_REGISTRY_URL}"   # Confluent Schema Registry
+
+  # Default topic config (overridden per topic)
+  defaults:
+    replication_factor: 3
+    min_insync_replicas: 2
+    compression_type: lz4
+    retention_ms: 604800000     # 7 days
+    segment_ms: 86400000        # 1 day segments
+    cleanup_policy: delete
+
+# ─────────────────────────────────────────────
+# TOPIC INVENTORY
+# ─────────────────────────────────────────────
+topics:
+
+  # ── USER LIFECYCLE ──────────────────────────
+
+  - name: investiq.user.registered
+    partitions: 12
+    replication_factor: 3
+    retention_ms: 2592000000     # 30 days
+    producer: auth-service
+    consumers: [user-service, notification-service, analytics-service, background-jobs]
+    description: "User phone registration + OTP verification complete"
+    schema:
+      event_id: uuid
+      user_id: uuid
+      phone: string
+      email: string (nullable)
+      full_name: string
+      referral_code: string (nullable)
+      referred_by: uuid (nullable)
+      registered_at: timestamp_tz
+      source: "MOBILE|WEB"
+      ip_address: string
+
+  - name: investiq.user.kyc.submitted
+    partitions: 6
+    retention_ms: 7776000000     # 90 days (compliance)
+    producer: user-service
+    consumers: [notification-service, background-jobs, analytics-service]
+    description: "User submitted KYC documents for review"
+
+  - name: investiq.user.kyc.approved
+    partitions: 6
+    retention_ms: 7776000000
+    producer: user-service
+    consumers: [auth-service, wallet-service, portfolio-service, notification-service]
+    description: "KYC verified — triggers wallet creation + onboarding"
+    schema:
+      event_id: uuid
+      user_id: uuid
+      kyc_status: "VERIFIED|REJECTED"
+      reviewed_by: uuid
+      reviewed_at: timestamp_tz
+
+  - name: investiq.user.profile.updated
+    partitions: 6
+    producer: user-service
+    consumers: [analytics-service, ai-advisor]
+
+  # ── WALLET & PAYMENTS ────────────────────────
+
+  - name: investiq.wallet.created
+    partitions: 6
+    producer: wallet-service
+    consumers: [user-service, notification-service]
+
+  - name: investiq.payment.initiated
+    partitions: 24
+    replication_factor: 3
+    retention_ms: 2592000000
+    producer: wallet-service
+    consumers: [notification-service, analytics-service]
+
+  - name: investiq.payment.completed
+    partitions: 24
+    replication_factor: 3
+    min_insync_replicas: 2
+    retention_ms: 2592000000
+    producer: wallet-service
+    consumers: [trade-service, notification-service, analytics-service, background-jobs]
+    description: "Payment gateway confirmed — funds available for trading"
+    schema:
+      event_id: uuid
+      payment_id: uuid
+      user_id: uuid
+      wallet_id: uuid
+      amount: decimal
+      mode: "UPI|NEFT|RTGS|IMPS"
+      journal_id: uuid
+      completed_at: timestamp_tz
+
+  - name: investiq.payment.failed
+    partitions: 12
+    producer: wallet-service
+    consumers: [notification-service, analytics-service]
+
+  - name: investiq.wallet.funded          # internal: wallet credited for trading
+    partitions: 24
+    replication_factor: 3
+    min_insync_replicas: 2
+    producer: wallet-service
+    consumers: [trade-service]
+    description: "Funds locked in escrow — trade-service may proceed with order"
+
+  - name: investiq.wallet.withdrawn
+    partitions: 12
+    producer: wallet-service
+    consumers: [notification-service, analytics-service, background-jobs]
+
+  # ── TRADING ─────────────────────────────────
+
+  - name: investiq.order.created
+    partitions: 48             # High throughput — 48 partitions at 10M users
+    replication_factor: 3
+    min_insync_replicas: 2
+    retention_ms: 604800000    # 7 days
+    producer: trade-service
+    consumers: [wallet-service, portfolio-service, notification-service, analytics-service]
+    key: user_id               # Partition by user for ordering guarantees
+    schema:
+      event_id: uuid
+      order_id: uuid
+      user_id: uuid
+      symbol: string
+      exchange: string
+      side: "BUY|SELL"
+      order_type: "MARKET|LIMIT"
+      quantity: decimal
+      price: decimal (nullable)
+      idempotency_key: string
+      created_at: timestamp_tz
+
+  - name: investiq.order.placed           # Broker acknowledged
+    partitions: 48
+    replication_factor: 3
+    min_insync_replicas: 2
+    producer: trade-service
+    consumers: [notification-service, analytics-service]
+
+  - name: investiq.order.executed
+    partitions: 48
+    replication_factor: 3
+    min_insync_replicas: 2
+    retention_ms: 2592000000   # 30 days
+    producer: trade-service
+    consumers: [wallet-service, portfolio-service, notification-service, analytics-service]
+    description: "Order fully/partially filled — trigger settlement"
+    schema:
+      event_id: uuid
+      order_id: uuid
+      user_id: uuid
+      symbol: string
+      side: string
+      filled_quantity: decimal
+      average_price: decimal
+      total_value: decimal
+      brokerage: decimal
+      net_amount: decimal
+      executed_at: timestamp_tz
+
+  - name: investiq.order.cancelled
+    partitions: 24
+    producer: trade-service
+    consumers: [wallet-service, notification-service]
+    description: "Order cancelled — release locked funds"
+
+  - name: investiq.order.failed
+    partitions: 12
+    producer: trade-service
+    consumers: [wallet-service, notification-service, analytics-service]
+
+  - name: investiq.trade.settled
+    partitions: 24
+    replication_factor: 3
+    retention_ms: 7776000000   # 90 days
+    producer: trade-service
+    consumers: [portfolio-service, notification-service, analytics-service, background-jobs]
+    description: "T+1 settlement complete"
+
+  - name: investiq.sip.executed
+    partitions: 12
+    producer: background-jobs
+    consumers: [wallet-service, trade-service, notification-service, analytics-service]
+
+  # ── PORTFOLIO ────────────────────────────────
+
+  - name: investiq.portfolio.updated
+    partitions: 24
+    producer: portfolio-service
+    consumers: [ai-advisor, analytics-service, notification-service]
+    description: "Portfolio value recalculated after price update or trade"
+
+  - name: investiq.portfolio.rebalance.suggested
+    partitions: 6
+    producer: ai-advisor
+    consumers: [notification-service]
+
+  # ── MARKET DATA ──────────────────────────────
+
+  - name: investiq.market.price.tick
+    partitions: 100            # One partition per 50 symbols (5000 symbols)
+    replication_factor: 2      # Lower RF for ephemeral price data
+    retention_ms: 86400000     # 1 day
+    compression_type: snappy
+    producer: market-data-service
+    consumers: [portfolio-service, websocket-gateway, analytics-service]
+    description: "Live price ticks from NSE/BSE WebSocket feed"
+    message_size_bytes: 512
+    throughput_estimate: "500,000 msg/sec during market hours"
+
+  - name: investiq.market.price.eod
+    partitions: 12
+    retention_ms: 2592000000
+    producer: market-data-service
+    consumers: [portfolio-service, analytics-service, background-jobs]
+    description: "End-of-day OHLCV snapshot"
+
+  - name: investiq.market.corporate.action
+    partitions: 6
+    retention_ms: 7776000000
+    producer: market-data-service
+    consumers: [portfolio-service, notification-service]
+
+  # ── NOTIFICATIONS ────────────────────────────
+
+  - name: investiq.notification.send
+    partitions: 24
+    producer: all services
+    consumers: [notification-service]
+    schema:
+      event_id: uuid
+      user_id: uuid
+      channel: "PUSH|SMS|EMAIL|IN_APP|WHATSAPP"
+      template_key: string
+      data: map<string, string>
+      priority: "LOW|MEDIUM|HIGH|CRITICAL"
+
+  - name: investiq.notification.delivered
+    partitions: 12
+    producer: notification-service
+    consumers: [analytics-service]
+
+  # ── AI & ANALYTICS ────────────────────────────
+
+  - name: investiq.ai.advice.generated
+    partitions: 12
+    retention_ms: 2592000000
+    producer: ai-advisor
+    consumers: [notification-service, analytics-service]
+
+  - name: investiq.ai.feedback.received
+    partitions: 6
+    producer: mobile-app (via api-gateway)
+    consumers: [ai-advisor, analytics-service]
+
+  - name: investiq.analytics.event
+    partitions: 48
+    retention_ms: 604800000
+    compression_type: snappy
+    producer: all services + mobile-app
+    consumers: [analytics-service]
+
+  # ── COMPLIANCE & AUDIT ───────────────────────
+
+  - name: investiq.audit.event
+    partitions: 24
+    replication_factor: 3
+    min_insync_replicas: 2
+    retention_ms: 157680000000  # 5 years (SEBI mandate)
+    cleanup_policy: compact     # Never delete
+    producer: all services
+    consumers: [background-jobs (audit DB writer)]
+
+  - name: investiq.compliance.aml.alert
+    partitions: 6
+    replication_factor: 3
+    retention_ms: 157680000000  # 5 years
+    producer: analytics-service, background-jobs
+    consumers: [notification-service (alert compliance team)]
+
+# ─────────────────────────────────────────────
+# EVENT FLOW DIAGRAM (text)
+# ─────────────────────────────────────────────
+#
+#  User Registers
+#  ──────────────
+#  auth-service ──[user.registered]──► user-service (create profile)
+#                                  ──► notification-service (welcome SMS/email)
+#                                  ──► analytics-service (funnel tracking)
+#
+#  KYC Approved
+#  ────────────
+#  user-service ──[kyc.approved]──► wallet-service (create wallet)
+#                               ──► auth-service (update kyc_status)
+#                               ──► notification-service (congratulations)
+#
+#  User Deposits ₹5000
+#  ──────────────────
+#  wallet-service ──[payment.completed]──► trade-service (funds available)
+#                 ──[wallet.funded]──────► trade-service (escrow locked)
+#                 ──[notification.send]──► notification-service
+#
+#  User Places BUY Order
+#  ─────────────────────
+#  trade-service ──[order.created]──► wallet-service (lock funds)
+#                                ──► notification-service (order placed)
+#  broker callback
+#  trade-service ──[order.executed]──► wallet-service (debit + settle)
+#                                 ──► portfolio-service (update holdings)
+#                                 ──► notification-service (trade alert)
+#                                 ──► analytics-service
+#
+#  Live Price Update
+#  ─────────────────
+#  market-data-service ──[market.price.tick]──► portfolio-service (live P&L)
+#                                           ──► websocket-gateway (user UI)
+#                                           ──► analytics-service
+#
+# ─────────────────────────────────────────────
+# CONSUMER GROUP NAMING CONVENTION
+# ─────────────────────────────────────────────
+#
+#  {service-name}.{topic-name}.cg
+#  e.g.:
+#    wallet-service.investiq.order.executed.cg
+#    portfolio-service.investiq.market.price.tick.cg
+#    notification-service.investiq.order.executed.cg

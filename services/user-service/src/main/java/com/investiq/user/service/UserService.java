@@ -2,6 +2,7 @@ package com.investiq.user.service;
 
 import com.investiq.user.domain.entity.UserProfile;
 import com.investiq.user.domain.repository.UserProfileRepository;
+import com.investiq.user.dto.request.UpdateProfileRequest;
 import com.investiq.user.dto.response.UserProfileResponse;
 import com.investiq.user.exception.UserNotFoundException;
 import com.investiq.user.security.AuthenticatedUser;
@@ -26,6 +27,19 @@ public class UserService {
         UserProfile profile = userProfileRepository.findById(targetId)
             .orElseThrow(() -> new UserNotFoundException(targetId));
         return UserProfileResponse.from(profile);
+    }
+
+    @Transactional
+    public UserProfileResponse updateProfile(UUID targetId, UpdateProfileRequest request, AuthenticatedUser requester) {
+        if (!requester.owns(targetId)) {
+            throw new AccessDeniedException("Cannot update another user's profile");
+        }
+        UserProfile profile = userProfileRepository.findById(targetId)
+            .orElseThrow(() -> new UserNotFoundException(targetId));
+        if (request.fullName()  != null) profile.setFullName(request.fullName());
+        if (request.email()     != null) profile.setEmail(request.email());
+        if (request.dateOfBirth() != null) profile.setDateOfBirth(request.dateOfBirth());
+        return UserProfileResponse.from(userProfileRepository.save(profile));
     }
 
     // Called internally (e.g., from KYCService on first document submission)

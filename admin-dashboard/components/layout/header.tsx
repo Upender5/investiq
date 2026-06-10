@@ -19,13 +19,13 @@ export function Header({ title = "Dashboard" }: HeaderProps) {
   };
 
   return (
-    <header className="flex items-center justify-between border-b border-slate-700 bg-slate-900 px-6 py-4">
-      <h1 className="text-xl font-semibold text-white">{title}</h1>
+    <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
+      <h1 className="text-xl font-semibold text-foreground">{title}</h1>
 
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2">
-          <User className="h-4 w-4 text-slate-400" />
-          <span className="text-sm text-slate-300">
+        <div className="flex items-center gap-2 rounded-lg bg-card px-3 py-2">
+          <User className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-foreground/80">
             {userId ? `User ${userId.slice(0, 8)}…` : "Admin"}
           </span>
         </div>

@@ -7,11 +7,14 @@ import com.investiq.user.domain.repository.KYCDocumentRepository;
 import com.investiq.user.domain.repository.UserProfileRepository;
 import com.investiq.user.dto.request.KYCSubmissionRequest;
 import com.investiq.user.dto.response.KYCStatusResponse;
+import com.investiq.user.exception.UserNotFoundException;
 import com.investiq.user.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -64,6 +67,14 @@ public class KYCService {
         }
 
         return KYCStatusResponse.from(doc);
+    }
+
+    @Transactional(readOnly = true)
+    public KYCStatusResponse getStatus(UUID userId) {
+        return kycDocumentRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .findFirst()
+                .map(KYCStatusResponse::from)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No KYC submission found"));
     }
 
     private String extractPhoneFromContext() {

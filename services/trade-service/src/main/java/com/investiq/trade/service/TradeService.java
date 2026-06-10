@@ -7,8 +7,15 @@ import com.investiq.trade.domain.entity.AuditLog;
 import com.investiq.trade.domain.entity.Order;
 import com.investiq.trade.domain.repository.AuditLogRepository;
 import com.investiq.trade.domain.repository.OrderRepository;
+import com.investiq.trade.dto.request.ModifyOrderRequest;
 import com.investiq.trade.dto.request.PlaceOrderRequest;
+import com.investiq.trade.dto.response.MarginResponse;
 import com.investiq.trade.dto.response.OrderResponse;
+import com.investiq.trade.dto.response.PositionResponse;
+import com.investiq.trade.dto.response.TradeResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import com.investiq.trade.exception.TradeException;
 import com.investiq.trade.kafka.TradeEventPublisher;
 import com.investiq.trade.kafka.event.TradeExecutedEvent;
@@ -129,6 +136,70 @@ public class TradeService {
     public List<OrderResponse> getUserOrders(UUID userId) {
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId)
             .stream().map(OrderResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getUserOrdersFiltered(UUID userId, String status, String symbol, String side, Pageable pageable) {
+        // Simplified — real implementation adds dynamic JPA Specification predicates
+        List<OrderResponse> all = orderRepository.findByUserIdOrderByCreatedAtDesc(userId)
+            .stream()
+            .filter(o -> status == null || o.getStatus().name().equals(status))
+            .filter(o -> symbol == null || o.getSymbol().equalsIgnoreCase(symbol))
+            .filter(o -> side   == null || o.getSide().name().equals(side))
+            .map(OrderResponse::from)
+            .toList();
+        return new PageImpl<>(all, pageable, all.size());
+    }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getOrder(UUID userId, UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new TradeException("Order not found", HttpStatus.NOT_FOUND));
+        if (!order.getUserId().equals(userId)) {
+            throw new TradeException("Order not found", HttpStatus.NOT_FOUND);
+        }
+        return OrderResponse.from(order);
+    }
+
+    @Transactional
+    public OrderResponse modifyOrder(UUID userId, UUID orderId, ModifyOrderRequest req) {
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new TradeException("Order not found", HttpStatus.NOT_FOUND));
+        if (!order.getUserId().equals(userId)) {
+            throw new TradeException("Order not found", HttpStatus.NOT_FOUND);
+        }
+        if (order.getOrderType() != Order.OrderType.LIMIT) {
+            throw new TradeException("Only LIMIT orders can be modified", HttpStatus.BAD_REQUEST);
+        }
+        if (req.quantity() != null) order.setQuantity(req.quantity());
+        if (req.price()    != null) order.setPrice(req.price());
+        Order saved = orderRepository.save(order);
+        audit(orderId, userId, "ORDER_MODIFIED",
+            "qty=%s price=%s".formatted(req.quantity(), req.price()));
+        return OrderResponse.from(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TradeResponse> getUserTrades(UUID userId, String symbol, String from, String to, Pageable pageable) {
+        return Page.empty(pageable); // TODO: query executed trades table
+    }
+
+    @Transactional(readOnly = true)
+    public List<PositionResponse> getPositions(UUID userId) {
+        return List.of(); // TODO: aggregate from executed trades grouped by symbol
+    }
+
+    @Transactional(readOnly = true)
+    public MarginResponse getMargins(UUID userId) {
+        // TODO: call broker gateway for live margin data
+        return new MarginResponse(
+            java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO,
+            java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO,
+            java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO,
+            java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO,
+            java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO,
+            java.math.BigDecimal.ZERO
+        );
     }
 
     @Transactional

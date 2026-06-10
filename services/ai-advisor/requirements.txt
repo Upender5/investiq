@@ -4,7 +4,7 @@ pydantic==2.10.3
 pydantic-settings==2.7.0
 langchain==0.3.13
 langchain-anthropic==0.3.3
-langchain-core==0.3.28
+langchain-core==0.3.30
 anthropic==0.42.0
 redis[asyncio]==5.2.1
 python-jose[cryptography]==3.3.0

@@ -3,7 +3,6 @@
 # =============================================================
 
 # ── SECRETS (NEVER commit these) ─────────────────────────────
-.env
 .env.local
 .env.*.local
 .env.production

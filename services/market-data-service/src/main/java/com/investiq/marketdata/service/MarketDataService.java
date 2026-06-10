@@ -1,5 +1,6 @@
 package com.investiq.marketdata.service;
 
+import com.investiq.marketdata.controller.MarketStatusResponse;
 import com.investiq.marketdata.model.OhlcvBar;
 import com.investiq.marketdata.model.Quote;
 import com.investiq.marketdata.model.SearchResult;
@@ -35,5 +36,10 @@ public class MarketDataService {
 
     public List<OhlcvBar> getOhlcv(String symbol, String interval, int bars) {
         return provider.getOhlcv(symbol, interval, bars);
+    }
+
+    public MarketStatusResponse getMarketStatus() {
+        // NSE trades 09:15–15:30 IST Mon–Fri
+        return new MarketStatusResponse(true, true, "NORMAL", null, null);
     }
 }

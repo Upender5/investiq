@@ -3,9 +3,9 @@ spring:
     name: auth-service
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/investiq_auth}
-    username: ${DB_USERNAME:investUpender}
-    password: ${DB_PASSWORD:invest@Up#3955}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/investiq}
+    username: ${DB_USERNAME:investiq}
+    password: ${DB_PASSWORD:Investiq@1301}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -26,8 +26,8 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      port: ${REDIS_PORT:6380}
+      password: ${REDIS_PASSWORD:redis@123}
       timeout: 2000ms
 
 server:
@@ -44,7 +44,7 @@ management:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:change-me-to-a-256-bit-base64-secret-in-prod}
+    secret: ${JWT_SECRET:investiq-super-secret-jwt-key-change-in-production-min-256bits}
     access-token-expiry-ms: ${JWT_ACCESS_EXPIRY_MS:900000}       # 15 min
     refresh-token-expiry-ms: ${JWT_REFRESH_EXPIRY_MS:604800000}  # 7 days
   otp:

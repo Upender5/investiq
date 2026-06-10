@@ -76,13 +76,13 @@ export function OtpForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
             <svg
-              className="h-8 w-8 text-white"
+              className="h-8 w-8 text-foreground"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -95,8 +95,8 @@ export function OtpForm() {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">InvestIQ</h1>
-          <p className="mt-1 text-slate-400">Admin Dashboard</p>
+          <h1 className="text-2xl font-bold text-foreground">InvestIQ</h1>
+          <p className="mt-1 text-muted-foreground">Admin Dashboard</p>
         </div>
 
         <Card>
@@ -107,10 +107,10 @@ export function OtpForm() {
                 className="flex flex-col gap-5"
               >
                 <div>
-                  <h2 className="text-lg font-semibold text-white">
+                  <h2 className="text-lg font-semibold text-foreground">
                     Sign In
                   </h2>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Enter your registered mobile number
                   </p>
                 </div>
@@ -127,7 +127,7 @@ export function OtpForm() {
                 />
 
                 {serverError && (
-                  <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                  <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-loss">
                     {serverError}
                   </p>
                 )}
@@ -147,16 +147,16 @@ export function OtpForm() {
                 className="flex flex-col gap-5"
               >
                 <div>
-                  <h2 className="text-lg font-semibold text-white">
+                  <h2 className="text-lg font-semibold text-foreground">
                     Enter OTP
                   </h2>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     OTP sent to +91 {phone}. Check your server console in dev
                     mode.
                   </p>
                 </div>
 
-                <div className="rounded-lg bg-indigo-500/10 px-4 py-3 text-sm text-indigo-300">
+                <div className="rounded-lg bg-primary/10 px-4 py-3 text-sm text-primary">
                   💡 In development, check the auth-service logs for the OTP
                   code.
                 </div>
@@ -173,7 +173,7 @@ export function OtpForm() {
                 />
 
                 {serverError && (
-                  <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                  <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-loss">
                     {serverError}
                   </p>
                 )}
@@ -194,7 +194,7 @@ export function OtpForm() {
                     setServerError(null);
                     otpForm.reset();
                   }}
-                  className="text-center text-sm text-slate-400 hover:text-white transition-colors"
+                  className="text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   ← Change number
                 </button>
@@ -203,7 +203,7 @@ export function OtpForm() {
           </CardContent>
         </Card>
 
-        <p className="mt-6 text-center text-xs text-slate-500">
+        <p className="mt-6 text-center text-xs text-muted-foreground/80">
           InvestIQ · For Indian College Students · Investment decisions carry
           risk
         </p>

@@ -17,7 +17,7 @@ export function StatsCard({
   change,
   changeLabel,
   icon: Icon,
-  iconColor = "text-indigo-400",
+  iconColor = "text-primary",
 }: StatsCardProps) {
   const isPositive = change !== undefined && change >= 0;
   const isNegative = change !== undefined && change < 0;
@@ -25,20 +25,20 @@ export function StatsCard({
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex items-start justify-between">
-        <p className="text-sm font-medium text-slate-400">{label}</p>
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
         {Icon && (
-          <div className="rounded-lg bg-slate-700 p-2">
+          <div className="rounded-lg bg-secondary p-2">
             <Icon className={twMerge("h-5 w-5", iconColor)} />
           </div>
         )}
       </div>
       <div>
-        <p className="text-2xl font-bold text-white">{value}</p>
+        <p className="text-2xl font-bold text-foreground">{value}</p>
         {change !== undefined && (
           <p
             className={twMerge(
               "mt-1 text-sm font-medium",
-              isPositive ? "text-green-400" : isNegative ? "text-red-400" : "text-slate-400"
+              isPositive ? "text-profit" : isNegative ? "text-loss" : "text-muted-foreground"
             )}
           >
             {isPositive ? "+" : ""}

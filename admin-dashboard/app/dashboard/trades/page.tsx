@@ -176,8 +176,8 @@ export default function TradesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Trades</h2>
-          <p className="text-sm text-slate-400">Order history and new orders</p>
+          <h2 className="text-2xl font-bold text-foreground">Trades</h2>
+          <p className="text-sm text-muted-foreground">Order history and new orders</p>
         </div>
         <Button onClick={() => setShowForm((v) => !v)}>
           {showForm ? (
@@ -211,17 +211,17 @@ export default function TradesPage() {
 
               {/* Side toggle */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-slate-300">
+                <label className="text-sm font-medium text-foreground/80">
                   Side
                 </label>
-                <div className="flex rounded-lg overflow-hidden border border-slate-600">
+                <div className="flex rounded-lg overflow-hidden border border-input">
                   <button
                     type="button"
                     onClick={() => setValue("side", "BUY")}
                     className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
                       side === "BUY"
                         ? "bg-green-500 text-white"
-                        : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                        : "bg-secondary text-muted-foreground hover:bg-secondary/80"
                     }`}
                   >
                     BUY
@@ -232,7 +232,7 @@ export default function TradesPage() {
                     className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
                       side === "SELL"
                         ? "bg-red-500 text-white"
-                        : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                        : "bg-secondary text-muted-foreground hover:bg-secondary/80"
                     }`}
                   >
                     SELL
@@ -242,17 +242,17 @@ export default function TradesPage() {
 
               {/* Type toggle */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-slate-300">
+                <label className="text-sm font-medium text-foreground/80">
                   Order Type
                 </label>
-                <div className="flex rounded-lg overflow-hidden border border-slate-600">
+                <div className="flex rounded-lg overflow-hidden border border-input">
                   <button
                     type="button"
                     onClick={() => setValue("type", "MARKET")}
                     className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
                       type === "MARKET"
-                        ? "bg-indigo-500 text-white"
-                        : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                        ? "bg-primary text-white"
+                        : "bg-secondary text-muted-foreground hover:bg-secondary/80"
                     }`}
                   >
                     MARKET
@@ -262,8 +262,8 @@ export default function TradesPage() {
                     onClick={() => setValue("type", "LIMIT")}
                     className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
                       type === "LIMIT"
-                        ? "bg-indigo-500 text-white"
-                        : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                        ? "bg-primary text-white"
+                        : "bg-secondary text-muted-foreground hover:bg-secondary/80"
                     }`}
                   >
                     LIMIT
@@ -297,12 +297,12 @@ export default function TradesPage() {
 
               {/* Errors & success */}
               {formError && (
-                <div className="col-span-full rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                <div className="col-span-full rounded-lg bg-red-500/10 px-3 py-2 text-sm text-loss">
                   {formError}
                 </div>
               )}
               {formSuccess && (
-                <div className="col-span-full rounded-lg bg-green-500/10 px-3 py-2 text-sm text-green-400">
+                <div className="col-span-full rounded-lg bg-green-500/10 px-3 py-2 text-sm text-profit">
                   {formSuccess}
                 </div>
               )}
@@ -333,7 +333,7 @@ export default function TradesPage() {
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-600 border-t-indigo-500" />
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-input border-t-indigo-500" />
             </div>
           ) : (
             <Table>
@@ -352,10 +352,10 @@ export default function TradesPage() {
               <TableBody>
                 {(trades ?? []).map((trade) => (
                   <TableRow key={trade.orderId}>
-                    <TableCell className="font-mono text-xs text-slate-400">
+                    <TableCell className="font-mono text-xs text-muted-foreground">
                       {trade.orderId.slice(0, 12)}…
                     </TableCell>
-                    <TableCell className="font-semibold text-white">
+                    <TableCell className="font-semibold text-foreground">
                       {trade.symbol}
                     </TableCell>
                     <TableCell>{tradeSideBadge(trade.side)}</TableCell>

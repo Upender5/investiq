@@ -5,8 +5,11 @@ import com.investiq.auth.domain.entity.RefreshToken;
 import com.investiq.auth.domain.entity.User;
 import com.investiq.auth.domain.repository.RefreshTokenRepository;
 import com.investiq.auth.domain.repository.UserRepository;
+import com.investiq.auth.dto.request.LoginRequest;
+import com.investiq.auth.dto.request.RegisterRequest;
 import com.investiq.auth.dto.response.AuthResponse;
 import com.investiq.auth.exception.AuthException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +33,39 @@ public class AuthService {
     private final JwtService jwtService;
     private final OtpService otpService;
     private final JwtConfig jwtConfig;
+    private final PasswordEncoder passwordEncoder;
+
+    @Transactional
+    public AuthResponse register(RegisterRequest request) {
+        if (userRepository.existsByPhone(request.phone())) {
+            throw new AuthException("Phone number already registered");
+        }
+        if (userRepository.existsByEmail(request.email())) {
+            throw new AuthException("Email already registered");
+        }
+        User user = userRepository.save(User.builder()
+            .fullName(request.fullName())
+            .phone(request.phone())
+            .email(request.email())
+            .passwordHash(passwordEncoder.encode(request.password()))
+            .build());
+        return issueTokens(user);
+    }
+
+    @Transactional
+    public AuthResponse login(LoginRequest request) {
+        User user = userRepository.findByPhoneOrEmail(request.identifier(), request.identifier())
+            .orElseThrow(() -> new AuthException("Invalid credentials"));
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new AuthException("Invalid credentials");
+        }
+        return issueTokens(user);
+    }
+
+    @Transactional
+    public void logoutAll(String userId) {
+        refreshTokenRepository.revokeAllByUserId(java.util.UUID.fromString(userId));
+    }
 
     public void sendOtp(String phone) {
         otpService.generateAndStore(phone);

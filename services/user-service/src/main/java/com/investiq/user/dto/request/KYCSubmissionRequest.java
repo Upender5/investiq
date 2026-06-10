@@ -3,7 +3,6 @@ package com.investiq.user.dto.request;
 import com.investiq.user.domain.entity.KYCDocument.DocumentType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.hibernate.validator.constraints.URL;
 

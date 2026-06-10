@@ -6,6 +6,7 @@ volumes:
   postgres-data:
   redis-data:
   kafka-data:
+  mongo-data:
 
 services:
 
@@ -13,7 +14,6 @@ services:
   postgres:
     image: timescale/timescaledb:latest-pg16
     container_name: investiq-postgres
-    # chmod ensures init.sh runs on Linux hosts (Docker Desktop for Windows grants exec automatically)
     entrypoint:
       - /bin/bash
       - -c
@@ -40,9 +40,7 @@ services:
       - investiq-net
     restart: unless-stopped
 
-  # ── Redis 7 (standalone for local dev — use Redis Cluster in prod) ──────────
-  # Host port 6380 avoids conflict with any existing Redis on 6379.
-  # Docker-internal services still reach this via redis:6379.
+  # ── Redis 7 ─────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: investiq-redis
@@ -69,14 +67,29 @@ services:
       - investiq-net
     restart: unless-stopped
 
-  # MongoDB: using local install — connect via Compass at localhost:27017
+  # ── MongoDB 7 ────────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: investiq-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: investiq_analytics
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - investiq-net
+    restart: unless-stopped
 
-  # ── Kafka 3.7 (KRaft mode — no ZooKeeper needed) ───────────────────────────
-  # Docker-internal:  kafka:9092   (PLAINTEXT, for services in investiq-net)
-  # Host access:      localhost:9094 (EXTERNAL, for local tools / IDE)
-  # ── Kafka 3.7 (KRaft mode, official Apache image) ──────────────────────────
-  # Docker-internal:  kafka:9092   (PLAINTEXT, for services in investiq-net)
-  # Host access:      localhost:9094 (EXTERNAL, for local tools / IDE)
+  # ── Kafka 3.7 (KRaft mode) ──────────────────────────────────────────────────
   kafka:
     image: apache/kafka:3.7.1
     container_name: investiq-kafka
@@ -108,7 +121,211 @@ services:
       - investiq-net
     restart: unless-stopped
 
-  # ── AI Advisor (FastAPI, port 9001) ────────────────────────────────────────
+  # ────────────────────────────────────────────────────────────────────────────
+  # JAVA MICROSERVICES
+  # ────────────────────────────────────────────────────────────────────────────
+
+  # ── Auth Service (8081) ─────────────────────────────────────────────────────
+  auth-service:
+    build: ./services/auth-service
+    container_name: investiq-auth
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/investiq_auth
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET}
+      TZ: Asia/Kolkata
+    ports:
+      - "8081:8081"
+    networks:
+      - investiq-net
+    restart: unless-stopped
+
+  # ── User Service (8082) ─────────────────────────────────────────────────────
+  user-service:
+    build: ./services/user-service
+    container_name: investiq-user
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/investiq_users
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET}
+      TZ: Asia/Kolkata
+    ports:
+      - "8082:8082"
+    networks:
+      - investiq-net
+    restart: unless-stopped
+
+  # ── Trade Service (8083) ────────────────────────────────────────────────────
+  trade-service:
+    build: ./services/trade-service
+    container_name: investiq-trade
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/investiq_trades
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET}
+      TZ: Asia/Kolkata
+    ports:
+      - "8083:8083"
+    networks:
+      - investiq-net
+    restart: unless-stopped
+
+  # ── Wallet Service (8084) ───────────────────────────────────────────────────
+  wallet-service:
+    build: ./services/wallet-service
+    container_name: investiq-wallet
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/investiq_wallet
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET}
+      TZ: Asia/Kolkata
+    ports:
+      - "8084:8084"
+    networks:
+      - investiq-net
+    restart: unless-stopped
+
+  # ── Market Data Service (8085) ──────────────────────────────────────────────
+  market-data-service:
+    build: ./services/market-data-service
+    container_name: investiq-market-data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/investiq_market
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET}
+      TZ: Asia/Kolkata
+    ports:
+      - "8085:8085"
+    networks:
+      - investiq-net
+    restart: unless-stopped
+
+  # ── Notification Service (8086) ─────────────────────────────────────────────
+  notification-service:
+    build: ./services/notification-service
+    container_name: investiq-notification
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/investiq_notifications
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET}
+      TZ: Asia/Kolkata
+    ports:
+      - "8086:8086"
+    networks:
+      - investiq-net
+    restart: unless-stopped
+
+  # ── Fund Service (8087) ─────────────────────────────────────────────────────
+  fund-service:
+    build: ./services/fund-service
+    container_name: investiq-fund
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/investiq_funds
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET}
+      TZ: Asia/Kolkata
+    ports:
+      - "8087:8087"
+    networks:
+      - investiq-net
+    restart: unless-stopped
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # PYTHON / FASTAPI SERVICES
+  # ────────────────────────────────────────────────────────────────────────────
+
+  # ── AI Advisor (9001) ───────────────────────────────────────────────────────
   ai-advisor:
     build: ./services/ai-advisor
     container_name: investiq-ai-advisor
@@ -116,12 +333,12 @@ services:
       redis:
         condition: service_healthy
     environment:
-      ANTHROPIC_API_KEY:  ${ANTHROPIC_API_KEY}
-      CLAUDE_MODEL:       ${CLAUDE_MODEL:-claude-sonnet-4-6}
-      REDIS_HOST:         redis
-      REDIS_PORT:         6379
-      REDIS_PASSWORD:     ${REDIS_PASSWORD}
-      JWT_SECRET:         ${JWT_SECRET}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      CLAUDE_MODEL:      ${CLAUDE_MODEL:-claude-sonnet-4-6}
+      REDIS_HOST:        redis
+      REDIS_PORT:        6379
+      REDIS_PASSWORD:    ${REDIS_PASSWORD}
+      JWT_SECRET:        ${JWT_SECRET}
       TZ: Asia/Kolkata
     ports:
       - "9001:9001"
@@ -135,4 +352,73 @@ services:
       - investiq-net
     restart: unless-stopped
 
-  # pgAdmin: using local install — connect to postgres at localhost:5432
+  # ── ML Scoring Service (9002) ───────────────────────────────────────────────
+  ml-scoring-service:
+    build: ./services/ml-scoring-service
+    container_name: investiq-ml-scoring
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_HOST:     redis
+      REDIS_PORT:     6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET:     ${JWT_SECRET}
+      TZ: Asia/Kolkata
+    ports:
+      - "9002:9002"
+    networks:
+      - investiq-net
+    restart: unless-stopped
+
+  # ── Analytics Service (9003) ────────────────────────────────────────────────
+  analytics-service:
+    build: ./services/analytics-service
+    container_name: investiq-analytics
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      MONGO_URI:      mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017
+      MONGO_DB:       investiq_analytics
+      REDIS_HOST:     redis
+      REDIS_PORT:     6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET:     ${JWT_SECRET}
+      TZ: Asia/Kolkata
+    ports:
+      - "9003:9003"
+    networks:
+      - investiq-net
+    restart: unless-stopped
+
+  # ── Background Jobs (9004) ──────────────────────────────────────────────────
+  background-jobs:
+    build: ./services/background-jobs
+    container_name: investiq-background-jobs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      DB_HOST:        postgres
+      DB_PORT:        5432
+      DB_USER:        ${POSTGRES_USER}
+      DB_PASSWORD:    ${POSTGRES_PASSWORD}
+      REDIS_HOST:     redis
+      REDIS_PORT:     6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET:     ${JWT_SECRET}
+      TZ: Asia/Kolkata
+    ports:
+      - "9004:9004"
+    networks:
+      - investiq-net
+    restart: unless-stopped

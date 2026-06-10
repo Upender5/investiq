@@ -30,6 +30,22 @@ public class User {
     @Column(name = "full_name")
     private String fullName;
 
+    @Column(name = "password_hash")
+    private String passwordHash;
+
+    @Column(name = "mfa_enabled", nullable = false)
+    @Builder.Default
+    private boolean mfaEnabled = false;
+
+    @Column(name = "mfa_secret", length = 64)
+    private String mfaSecret;
+
+    @Column(name = "oauth_provider", length = 20)
+    private String oauthProvider;
+
+    @Column(name = "oauth_subject", length = 255)
+    private String oauthSubject;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

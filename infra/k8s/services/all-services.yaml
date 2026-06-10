@@ -110,6 +110,18 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: fund-service
+  namespace: investiq
+spec:
+  selector:
+    app: fund-service
+  ports:
+    - port: 8087
+      targetPort: 8087
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: background-jobs
   namespace: investiq
 spec:

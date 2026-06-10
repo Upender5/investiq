@@ -16,3 +16,13 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
         return {"userId": user_id, "role": payload.get("role", "USER")}
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+
+def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    role = user.get("role", "")
+    if role not in ("ADMIN", "SUPER_ADMIN", "ANALYST", "OPERATIONS"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return user

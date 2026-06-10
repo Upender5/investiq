@@ -108,20 +108,20 @@ export default function WalletPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white">Wallet</h2>
-        <p className="text-sm text-slate-400">Balance and transaction history</p>
+        <h2 className="text-2xl font-bold text-foreground">Wallet</h2>
+        <p className="text-sm text-muted-foreground">Balance and transaction history</p>
       </div>
 
       {/* Balance cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="border-indigo-500/30 bg-indigo-500/10">
+        <Card className="border-primary/30 bg-primary/10">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-indigo-500/20 p-3">
-              <Wallet className="h-6 w-6 text-indigo-400" />
+            <div className="rounded-lg bg-primary/20 p-3">
+              <Wallet className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Total Balance</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-sm text-muted-foreground">Total Balance</p>
+              <p className="text-2xl font-bold text-foreground">
                 {formatINR(balance?.total ?? 0)}
               </p>
             </div>
@@ -131,11 +131,11 @@ export default function WalletPage() {
         <Card>
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-green-500/10 p-3">
-              <ArrowDownCircle className="h-6 w-6 text-green-400" />
+              <ArrowDownCircle className="h-6 w-6 text-profit" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Available</p>
-              <p className="text-xl font-bold text-green-400">
+              <p className="text-sm text-muted-foreground">Available</p>
+              <p className="text-xl font-bold text-profit">
                 {formatINR(balance?.available ?? 0)}
               </p>
             </div>
@@ -148,7 +148,7 @@ export default function WalletPage() {
               <ArrowUpCircle className="h-6 w-6 text-yellow-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Locked (In Orders)</p>
+              <p className="text-sm text-muted-foreground">Locked (In Orders)</p>
               <p className="text-xl font-bold text-yellow-400">
                 {formatINR(balance?.locked ?? 0)}
               </p>
@@ -175,7 +175,7 @@ export default function WalletPage() {
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-600 border-t-indigo-500" />
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-input border-t-indigo-500" />
             </div>
           ) : (
             <Table>
@@ -193,16 +193,16 @@ export default function WalletPage() {
                   const isCredit = txn.amount > 0;
                   return (
                     <TableRow key={txn.id}>
-                      <TableCell className="font-mono text-xs text-slate-400">
+                      <TableCell className="font-mono text-xs text-muted-foreground">
                         {txn.id}
                       </TableCell>
                       <TableCell>{txnTypeBadge(txn.type)}</TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-foreground/80">
                         {txn.description}
                       </TableCell>
                       <TableCell
                         className={`text-right font-semibold ${
-                          isCredit ? "text-green-400" : "text-red-400"
+                          isCredit ? "text-profit" : "text-loss"
                         }`}
                       >
                         {isCredit ? "+" : ""}

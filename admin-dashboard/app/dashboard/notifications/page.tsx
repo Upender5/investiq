@@ -101,8 +101,8 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Notifications</h2>
-          <p className="text-sm text-slate-400">
+          <h2 className="text-2xl font-bold text-foreground">Notifications</h2>
+          <p className="text-sm text-muted-foreground">
             {unreadCount > 0
               ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`
               : "All caught up!"}
@@ -129,13 +129,13 @@ export default function NotificationsPage() {
             className={twMerge(
               "rounded-lg px-4 py-2 text-sm font-medium capitalize transition-colors",
               filter === tab
-                ? "bg-indigo-500 text-white"
-                : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                ? "bg-primary text-white"
+                : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
             )}
           >
             {tab}
             {tab === "unread" && unreadCount > 0 && (
-              <span className="ml-2 rounded-full bg-indigo-600 px-1.5 py-0.5 text-xs">
+              <span className="ml-2 rounded-full bg-primary px-1.5 py-0.5 text-xs">
                 {unreadCount}
               </span>
             )}
@@ -146,10 +146,10 @@ export default function NotificationsPage() {
       {/* Notification list */}
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-600 border-t-indigo-500" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-input border-t-indigo-500" />
         </div>
       ) : displayed.length === 0 ? (
-        <div className="flex flex-col items-center py-16 text-slate-500">
+        <div className="flex flex-col items-center py-16 text-muted-foreground/80">
           <Bell className="mb-3 h-12 w-12" />
           <p className="text-lg font-medium">No notifications</p>
           <p className="mt-1 text-sm">
@@ -164,7 +164,7 @@ export default function NotificationsPage() {
               className={twMerge(
                 "transition-colors",
                 !notif.read
-                  ? "border-indigo-500/30 bg-indigo-500/5"
+                  ? "border-primary/30 bg-primary/5"
                   : "opacity-70"
               )}
             >
@@ -174,13 +174,13 @@ export default function NotificationsPage() {
                     {!notif.read && (
                       <span className="h-2 w-2 rounded-full bg-indigo-400 flex-shrink-0" />
                     )}
-                    <p className="font-semibold text-white">{notif.title}</p>
+                    <p className="font-semibold text-foreground">{notif.title}</p>
                     {notifTypeBadge(notif.type)}
                   </div>
-                  <p className="mt-1.5 text-sm text-slate-300">
+                  <p className="mt-1.5 text-sm text-foreground/80">
                     {notif.message}
                   </p>
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 text-xs text-muted-foreground/80">
                     {new Date(notif.createdAt).toLocaleString("en-IN", {
                       day: "numeric",
                       month: "short",

@@ -1,15 +1,12 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TYPE user_role AS ENUM ('STUDENT', 'ADMIN');
-CREATE TYPE kyc_status AS ENUM ('PENDING', 'SUBMITTED', 'VERIFIED', 'REJECTED');
-
 CREATE TABLE users (
     id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     phone       VARCHAR(15) NOT NULL UNIQUE,
     email       VARCHAR(255),
     full_name   VARCHAR(255),
-    role        user_role   NOT NULL DEFAULT 'STUDENT',
-    kyc_status  kyc_status  NOT NULL DEFAULT 'PENDING',
+    role        VARCHAR(20)  NOT NULL DEFAULT 'STUDENT',
+    kyc_status  VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
     is_active   BOOLEAN     NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()

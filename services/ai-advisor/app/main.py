@@ -4,6 +4,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.api.v1.advisor import router as advisor_router
+from app.api.v1.chat import router as chat_router
+from app.api.v1.portfolio_review import router as portfolio_router
+from app.api.v1.goal_advisor import router as goal_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -11,12 +14,21 @@ logging.basicConfig(
 )
 
 app = FastAPI(
-    title="InvestIQ AI Advisor",
-    description="AI-powered investment recommendations for Indian college students",
+    title="InvestIQ AI Service",
+    description=(
+        "AI-powered investment advisor, portfolio review, stock analysis, "
+        "risk assessment, goal planning and recommendations for InvestIQ. "
+        "Powered by Claude (Anthropic). All responses include mandatory disclaimer."
+    ),
     version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 app.include_router(advisor_router)
+app.include_router(chat_router)
+app.include_router(portfolio_router)
+app.include_router(goal_router)
 
 
 @app.exception_handler(Exception)
@@ -24,10 +36,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     logging.getLogger(__name__).error("Unhandled error", exc_info=exc)
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error"},
+        content={"success": False, "code": "INTERNAL_ERROR", "message": "Internal server error"},
     )
 
 
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 async def health() -> dict:
-    return {"status": "ok"}
+    return {"status": "ok", "service": "ai-advisor"}

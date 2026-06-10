@@ -9,7 +9,7 @@ interface PortfolioChartProps {
 export function PortfolioChart({ data }: PortfolioChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center text-slate-500 text-sm">
+      <div className="flex h-48 items-center justify-center text-muted-foreground/80 text-sm">
         No chart data available
       </div>
     );

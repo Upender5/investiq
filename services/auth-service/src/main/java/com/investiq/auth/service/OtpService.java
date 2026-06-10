@@ -30,6 +30,7 @@ public class OtpService {
         String otp = generateOtp();
         redisTemplate.opsForValue().set(KEY_PREFIX + phone, otp, Duration.ofSeconds(expirySeconds));
         try {
+            System.out.println("OTP: " + otp);
             smsGateway.sendOtp(phone, otp);
         } catch (SmsDeliveryException e) {
             redisTemplate.delete(KEY_PREFIX + phone);
