@@ -40,14 +40,12 @@ public class KiteLiveBrokerGateway implements BrokerGateway {
     private static final String VALIDITY_DAY    = "DAY";
 
     private final RestClient restClient;
-    private final String apiKey;
 
     public KiteLiveBrokerGateway(
         @Value("${app.broker.kite.base-url}") String baseUrl,
         @Value("${app.broker.kite.api-key}") String apiKey,
         @Value("${app.broker.kite.access-token}") String accessToken
     ) {
-        this.apiKey = apiKey;
         this.restClient = RestClient.builder()
             .baseUrl(baseUrl)
             .defaultHeader("X-Kite-Version", "3")

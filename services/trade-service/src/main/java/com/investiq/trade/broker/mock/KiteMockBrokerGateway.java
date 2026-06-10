@@ -30,8 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @ConditionalOnProperty(name = "app.broker.provider", havingValue = "mock", matchIfMissing = true)
 public class KiteMockBrokerGateway implements BrokerGateway {
 
-    private static final BigDecimal JITTER = new BigDecimal("0.005"); // ±0.5%
-
     // Simulated base market prices (NSE symbols → ₹)
     private static final Map<String, BigDecimal> BASE_PRICES = Map.of(
         "RELIANCE",  new BigDecimal("2450.00"),
