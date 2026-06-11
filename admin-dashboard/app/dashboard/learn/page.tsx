@@ -12,14 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import type { Course } from "@/types";
 
-const MOCK_COURSES: Course[] = [
-  { id: "c1", title: "Investing 101 — The Complete Beginner's Guide", description: "Master the fundamentals of stock market investing, mutual funds, and wealth building from scratch.", level: "Beginner", duration: "4h 20m", lessons: 18, completedLessons: 12, category: "Fundamentals", tags: ["stocks", "mf", "basics"], enrolled: true },
-  { id: "c2", title: "Technical Analysis Masterclass", description: "Learn chart patterns, indicators, and price action to time your trades like a professional.", level: "Intermediate", duration: "6h 45m", lessons: 24, completedLessons: 0, category: "Trading", tags: ["charts", "TA", "indicators"], enrolled: false },
-  { id: "c3", title: "Mutual Fund Investing — Build Wealth Systematically", description: "Everything about mutual funds, SIPs, ELSS, and building a goal-based MF portfolio.", level: "Beginner", duration: "3h 10m", lessons: 14, completedLessons: 14, category: "Mutual Funds", tags: ["mf", "sip", "elss"], enrolled: true },
-  { id: "c4", title: "Options Trading for Beginners", description: "Understand options Greeks, strategies like covered calls, iron condors, and risk management.", level: "Advanced", duration: "8h 30m", lessons: 32, completedLessons: 0, category: "Derivatives", tags: ["options", "f&o", "trading"], enrolled: false },
-  { id: "c5", title: "Tax Planning for Investors", description: "Minimize your tax burden legally using ELSS, NPS, LTCG exemptions, and smart tax harvesting.", level: "Intermediate", duration: "2h 50m", lessons: 10, completedLessons: 5, category: "Tax", tags: ["tax", "elss", "nps"], enrolled: true },
-  { id: "c6", title: "Fundamental Analysis — Pick Winning Stocks", description: "Learn to read financial statements, analyze business models, and find undervalued stocks.", level: "Intermediate", duration: "5h 15m", lessons: 20, completedLessons: 0, category: "Research", tags: ["FA", "stocks", "valuation"], enrolled: false },
-];
+// Course catalog is served from the learn-content service (not yet wired) — no fabricated courses.
+const MOCK_COURSES: Course[] = [];
 
 const DAILY_BYTES = [
   { term: "P/E Ratio", definition: "Price divided by earnings per share. A P/E of 20 means you pay ₹20 for every ₹1 of annual profit." },
@@ -140,6 +134,12 @@ export default function LearnPage() {
           </div>
         </div>
 
+        {filtered.length === 0 && (
+          <Card className="py-12 text-center text-muted-foreground/80">
+            <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
+            <p>Courses are coming soon.</p>
+          </Card>
+        )}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {filtered.map((course) => (
             <Card key={course.id} className="hover:border-muted-foreground/40 transition-colors group">

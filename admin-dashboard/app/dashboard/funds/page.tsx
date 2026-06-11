@@ -8,18 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Modal } from "@/components/ui/modal";
+import { useMutualFunds, useInvestLumpsum, useCreateSip } from "@/lib/hooks";
 import type { MutualFund } from "@/types";
-
-const MOCK_FUNDS: MutualFund[] = [
-  { id: "1", name: "Mirae Asset Large Cap Fund", amc: "Mirae Asset", category: "Equity", subCategory: "Large Cap", nav: 98.42, navDate: "2026-06-06", returns1Y: 18.4, returns3Y: 14.2, returns5Y: 16.8, riskRating: "Moderately High", rating: 5, expenseRatio: 0.54, aum: 42800, minSIP: 1000, minLumpsum: 5000, fundManager: "Gaurav Misra", benchmark: "BSE 100" },
-  { id: "2", name: "Axis Bluechip Fund", amc: "Axis MF", category: "Equity", subCategory: "Large Cap", nav: 55.18, navDate: "2026-06-06", returns1Y: 15.1, returns3Y: 12.8, returns5Y: 14.5, riskRating: "Moderately High", rating: 4, expenseRatio: 0.72, aum: 35600, minSIP: 500, minLumpsum: 5000, fundManager: "Shreyash Devalkar", benchmark: "NIFTY 100" },
-  { id: "3", name: "HDFC Mid Cap Opportunities", amc: "HDFC MF", category: "Equity", subCategory: "Mid Cap", nav: 142.35, navDate: "2026-06-06", returns1Y: 28.7, returns3Y: 21.4, returns5Y: 22.1, riskRating: "High", rating: 5, expenseRatio: 0.98, aum: 62400, minSIP: 500, minLumpsum: 5000, fundManager: "Chirag Setalvad", benchmark: "NIFTY Midcap 150" },
-  { id: "4", name: "Quant Small Cap Fund", amc: "Quant MF", category: "Equity", subCategory: "Small Cap", nav: 224.18, navDate: "2026-06-06", returns1Y: 42.1, returns3Y: 38.2, returns5Y: 44.5, riskRating: "Very High", rating: 5, expenseRatio: 0.64, aum: 22100, minSIP: 1000, minLumpsum: 5000, fundManager: "Ankit Pande", benchmark: "NIFTY Smallcap 250" },
-  { id: "5", name: "SBI Blue Chip Fund", amc: "SBI MF", category: "Equity", subCategory: "Large Cap", nav: 72.84, navDate: "2026-06-06", returns1Y: 14.2, returns3Y: 11.9, returns5Y: 13.4, riskRating: "Moderately High", rating: 4, expenseRatio: 0.89, aum: 44800, minSIP: 500, minLumpsum: 5000, fundManager: "Rohit Shimpi", benchmark: "BSE 100" },
-  { id: "6", name: "ICICI Pru Short Term Fund", amc: "ICICI Prudential", category: "Debt", subCategory: "Short Duration", nav: 48.92, navDate: "2026-06-06", returns1Y: 7.8, returns3Y: 7.1, returns5Y: 7.4, riskRating: "Low", rating: 4, expenseRatio: 0.44, aum: 18200, minSIP: 1000, minLumpsum: 5000, fundManager: "Manish Banthia", benchmark: "CRISIL Short Term" },
-  { id: "7", name: "Axis ELSS Tax Saver Fund", amc: "Axis MF", category: "Equity", subCategory: "ELSS", nav: 88.54, navDate: "2026-06-06", returns1Y: 16.8, returns3Y: 13.5, returns5Y: 15.2, riskRating: "High", rating: 4, expenseRatio: 0.68, aum: 34200, minSIP: 500, minLumpsum: 500, fundManager: "Shreyash Devalkar", benchmark: "NIFTY 200" },
-  { id: "8", name: "Nippon India Index Fund NIFTY50", amc: "Nippon India", category: "Equity", subCategory: "Index", nav: 32.18, navDate: "2026-06-06", returns1Y: 13.8, returns3Y: 10.9, returns5Y: 12.1, riskRating: "Moderately High", rating: 3, expenseRatio: 0.20, aum: 8900, minSIP: 100, minLumpsum: 500, fundManager: "Managed (Index)", benchmark: "NIFTY 50" },
-];
 
 const CATEGORIES = ["All", "Equity", "Debt", "Hybrid", "Gold", "International"];
 const RISK_LEVELS = ["All", "Low", "Moderate", "Moderately High", "High", "Very High"];
@@ -76,7 +66,7 @@ function SIPCalculatorModal({ open, onClose }: { open: boolean; onClose: () => v
               step={step}
               value={calc[key]}
               onChange={(e) => setCalc((p) => ({ ...p, [key]: Number(e.target.value) }))}
-              className="w-full accent-violet-500"
+              className="w-full accent-emerald-500"
             />
           </div>
         ))}
@@ -111,7 +101,34 @@ export default function FundsPage() {
   const [showCalc, setShowCalc] = useState(false);
   const [compareList, setCompareList] = useState<string[]>([]);
 
-  const filtered = MOCK_FUNDS.filter((f) => {
+  // fund-service (GET /mutual-funds)
+  const { data: fundData, isLoading } = useMutualFunds();
+  const funds = fundData ?? [];
+
+  const invest = useInvestLumpsum();
+  const createSip = useCreateSip();
+
+  function handleSip(fund: MutualFund) {
+    const input = window.prompt(
+      `Monthly SIP amount for ${fund.name} (min ₹${fund.minSIP}):`,
+      String(fund.minSIP)
+    );
+    const amount = Number(input);
+    if (!input || Number.isNaN(amount) || amount < fund.minSIP) return;
+    createSip.mutate({ schemeCode: fund.id, amount, frequency: "MONTHLY" });
+  }
+
+  function handleLumpsum(fund: MutualFund) {
+    const input = window.prompt(
+      `Lumpsum amount for ${fund.name} (min ₹${fund.minLumpsum}):`,
+      String(fund.minLumpsum)
+    );
+    const amount = Number(input);
+    if (!input || Number.isNaN(amount) || amount < fund.minLumpsum) return;
+    invest.mutate({ schemeCode: fund.id, amount });
+  }
+
+  const filtered = funds.filter((f) => {
     const matchSearch = !search || f.name.toLowerCase().includes(search.toLowerCase()) || f.amc.toLowerCase().includes(search.toLowerCase());
     const matchCat = category === "All" || f.category === category;
     const matchRisk = risk === "All" || f.riskRating === risk;
@@ -171,6 +188,17 @@ export default function FundsPage() {
         </div>
       )}
 
+      {isLoading && (
+        <div className="flex justify-center py-12">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-input border-t-primary" />
+        </div>
+      )}
+      {!isLoading && filtered.length === 0 && (
+        <div className="rounded-xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">
+          No funds available right now.
+        </div>
+      )}
+
       {/* Fund Cards */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {filtered.map((fund) => (
@@ -216,10 +244,21 @@ export default function FundsPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button size="sm" className="flex-1 bg-green-500 hover:bg-green-600">
+              <Button
+                size="sm"
+                className="flex-1 bg-green-500 hover:bg-green-600"
+                onClick={() => handleSip(fund)}
+                loading={createSip.isPending}
+              >
                 <Play className="h-3.5 w-3.5 mr-1" /> Start SIP
               </Button>
-              <Button size="sm" variant="secondary" className="flex-1">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="flex-1"
+                onClick={() => handleLumpsum(fund)}
+                loading={invest.isPending}
+              >
                 <Plus className="h-3.5 w-3.5 mr-1" /> Lumpsum
               </Button>
               <Button

@@ -1,12 +1,12 @@
 import logging
 
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 
 from app.api.v1.advisor import router as advisor_router
 from app.api.v1.chat import router as chat_router
 from app.api.v1.portfolio_review import router as portfolio_router
 from app.api.v1.goal_advisor import router as goal_router
+from app.envelope import install_envelope
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,15 +29,7 @@ app.include_router(advisor_router)
 app.include_router(chat_router)
 app.include_router(portfolio_router)
 app.include_router(goal_router)
-
-
-@app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception):
-    logging.getLogger(__name__).error("Unhandled error", exc_info=exc)
-    return JSONResponse(
-        status_code=500,
-        content={"success": False, "code": "INTERNAL_ERROR", "message": "Internal server error"},
-    )
+install_envelope(app)
 
 
 @app.get("/health", tags=["Health"])

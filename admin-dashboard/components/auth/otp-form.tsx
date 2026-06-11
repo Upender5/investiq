@@ -5,11 +5,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { authApi } from "@/lib/api";
+import { authApi, unwrap, getApiErrorMessage } from "@/lib/api";
 import { saveTokens } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { BrandMark } from "@/components/brand/brand-mark";
 import type { AuthTokens } from "@/types";
 
 const phoneSchema = z.object({
@@ -61,17 +62,16 @@ export function OtpForm() {
   const handleVerifyOtp = async (values: OtpFormValues) => {
     setServerError(null);
     try {
-      const response = await authApi.post<AuthTokens>("/auth/otp/verify", {
-        phone: `+91${phone}`,
-        otp: values.otp,
-      });
-      saveTokens(response.data);
+      const tokens = unwrap<AuthTokens>(
+        await authApi.post("/auth/otp/verify", {
+          phone: `+91${phone}`,
+          otp: values.otp,
+        })
+      );
+      saveTokens(tokens);
       router.push("/dashboard");
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "Invalid OTP. Please try again.";
-      setServerError(message);
+      setServerError(getApiErrorMessage(err, "Invalid OTP. Please try again."));
     }
   };
 
@@ -80,22 +80,12 @@ export function OtpForm() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
-            <svg
-              className="h-8 w-8 text-foreground"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0F172A]">
+            <BrandMark size={36} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">InvestIQ</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            Invest<span className="text-primary">IQ</span>
+          </h1>
           <p className="mt-1 text-muted-foreground">Admin Dashboard</p>
         </div>
 

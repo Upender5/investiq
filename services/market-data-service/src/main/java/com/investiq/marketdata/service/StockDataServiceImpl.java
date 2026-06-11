@@ -256,10 +256,7 @@ public class StockDataServiceImpl implements StockDataService {
         return zones[rnd.nextInt(zones.length)];
     }
 
-    private static StockMeta defaultMeta(String symbol) {
-        return new StockMeta(symbol, symbol, "NSE", "UNKNOWN", "UNKNOWN",
-                "INE000000000", 0L, false, false, false);
-    }
+    
 
     // ── Static metadata registry ──────────────────────────────────────────────
 

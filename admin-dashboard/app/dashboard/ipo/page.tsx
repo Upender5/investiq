@@ -8,98 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { IPO } from "@/types";
 
-const MOCK_IPOS: IPO[] = [
-  {
-    id: "ipo1",
-    companyName: "TechIndia Solutions Ltd",
-    symbol: "TECHINDIA",
-    issueSize: 2400,
-    priceRangeLow: 410,
-    priceRangeHigh: 430,
-    openDate: "2026-06-10",
-    closeDate: "2026-06-12",
-    listingDate: "2026-06-17",
-    status: "OPEN",
-    gmp: 85,
-    subscriptionTimes: 24.5,
-    lotSize: 34,
-    category: "IT Services",
-    rating: 4,
-    industry: "Technology",
-  },
-  {
-    id: "ipo2",
-    companyName: "GreenEnergy Power Corp",
-    symbol: "GREENERGY",
-    issueSize: 3800,
-    priceRangeLow: 285,
-    priceRangeHigh: 300,
-    openDate: "2026-06-15",
-    closeDate: "2026-06-17",
-    listingDate: "2026-06-22",
-    status: "UPCOMING",
-    gmp: 45,
-    lotSize: 50,
-    category: "Renewable Energy",
-    rating: 3,
-    industry: "Energy",
-  },
-  {
-    id: "ipo3",
-    companyName: "HealthFirst Diagnostics",
-    symbol: "HEALTHFST",
-    issueSize: 1200,
-    priceRangeLow: 640,
-    priceRangeHigh: 680,
-    openDate: "2026-05-28",
-    closeDate: "2026-05-30",
-    listingDate: "2026-06-05",
-    listingPrice: 742,
-    status: "LISTED",
-    gmp: 0,
-    subscriptionTimes: 18.2,
-    lotSize: 22,
-    category: "Healthcare",
-    rating: 4,
-    industry: "Healthcare",
-  },
-  {
-    id: "ipo4",
-    companyName: "BharatFinServ Ltd",
-    symbol: "BHARATFIN",
-    issueSize: 5200,
-    priceRangeLow: 195,
-    priceRangeHigh: 210,
-    openDate: "2026-06-20",
-    closeDate: "2026-06-24",
-    listingDate: "2026-06-29",
-    status: "UPCOMING",
-    gmp: 32,
-    lotSize: 71,
-    category: "NBFC",
-    rating: 3,
-    industry: "Financial Services",
-  },
-  {
-    id: "ipo5",
-    companyName: "RetailGiant India Ltd",
-    symbol: "RETAILGNT",
-    issueSize: 4600,
-    priceRangeLow: 320,
-    priceRangeHigh: 340,
-    openDate: "2026-05-20",
-    closeDate: "2026-05-22",
-    listingDate: "2026-05-28",
-    listingPrice: 318,
-    status: "LISTED",
-    gmp: 0,
-    subscriptionTimes: 6.4,
-    lotSize: 44,
-    category: "Retail",
-    rating: 2,
-    industry: "Consumer",
-  },
-];
+// IPO data feed is not yet wired to a backend service — no fabricated listings.
+const MOCK_IPOS: IPO[] = [];
 
 function statusBadge(status: IPO["status"]) {
   if (status === "OPEN") return <Badge variant="success">OPEN</Badge>;
@@ -175,6 +85,12 @@ export default function IPOPage() {
         {(["open", "upcoming", "listed"] as const).map((t) => (
           <TabsContent key={t} value={t} activeValue={tab}>
             <div className="space-y-4">
+              {tabData[t].length === 0 && (
+                <Card className="py-12 text-center text-muted-foreground/80">
+                  <Calendar className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                  <p>No IPOs to show here right now.</p>
+                </Card>
+              )}
               {tabData[t].map((ipo) => (
                 <Card key={ipo.id} className="hover:border-muted-foreground/40 transition-colors">
                   <div className="flex flex-wrap items-start justify-between gap-4">

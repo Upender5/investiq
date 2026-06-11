@@ -10,6 +10,7 @@ SERVICE_DBS=(
   investiq_wallet
   investiq_market
   investiq_notifications
+  investiq_funds
 )
 
 for db in "${SERVICE_DBS[@]}"; do

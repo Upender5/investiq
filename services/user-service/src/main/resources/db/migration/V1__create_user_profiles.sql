@@ -16,7 +16,7 @@ CREATE TABLE user_profiles (
     address_line2   VARCHAR(255),
     city            VARCHAR(100),
     state           VARCHAR(100),
-    pincode         CHAR(6),
+    pincode         VARCHAR(6),
     kyc_status      kyc_status  NOT NULL DEFAULT 'PENDING',
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()

@@ -7,7 +7,6 @@ import com.investiq.user.domain.repository.KYCDocumentRepository;
 import com.investiq.user.domain.repository.UserProfileRepository;
 import com.investiq.user.dto.request.KYCSubmissionRequest;
 import com.investiq.user.dto.response.KYCStatusResponse;
-import com.investiq.user.exception.UserNotFoundException;
 import com.investiq.user.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

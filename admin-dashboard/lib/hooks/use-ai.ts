@@ -4,7 +4,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { aiAdvisorApi, unwrap } from "@/lib/api";
 import { getUserId } from "@/lib/auth";
-import { MOCK_AI_INSIGHTS } from "@/lib/mock-data";
 
 export interface ChatRequest {
   message: string;
@@ -43,7 +42,7 @@ export function useAiRecommendations() {
   return useQuery<{ type: string; text: string }[]>({
     queryKey: ["ai", "recommendations"],
     queryFn: async () => unwrap(await aiAdvisorApi.get("/api/v1/ai/recommendations")),
-    placeholderData: MOCK_AI_INSIGHTS,
+    placeholderData: [],
   });
 }
 

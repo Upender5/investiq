@@ -3,7 +3,6 @@
 /** Hooks for market-data-service (port 8085) — quotes, stocks, watchlists */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { marketApi, unwrap, unwrapPage } from "@/lib/api";
-import { generateMockOHLC, mockQuote } from "@/lib/mock-data";
 import type { StockQuote } from "@/types";
 
 export interface ChartPoint {
@@ -16,7 +15,6 @@ export function useQuote(symbol: string) {
   return useQuery<StockQuote>({
     queryKey: ["market", "quote", symbol],
     queryFn: async () => unwrap(await marketApi.get(`/market/quotes/${symbol}`)),
-    placeholderData: mockQuote(symbol),
     refetchInterval: 15_000, // poll quotes during market hours
     enabled: !!symbol,
   });
@@ -29,7 +27,7 @@ export function useOhlcv(symbol: string, period: string, basePrice?: number) {
     queryKey: ["market", "ohlcv", symbol, period],
     queryFn: async () =>
       unwrap(await marketApi.get(`/market/quotes/${symbol}/ohlcv?period=${period}`)),
-    placeholderData: () => generateMockOHLC(basePrice ?? 1000, PERIOD_DAYS[period] ?? 90),
+    placeholderData: [],
     enabled: !!symbol,
   });
 }

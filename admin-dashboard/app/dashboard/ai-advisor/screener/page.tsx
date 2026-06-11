@@ -31,16 +31,6 @@ interface ScreenerResult {
   aiVerdict: string;
 }
 
-const MOCK_RESULTS: Record<string, ScreenerResult[]> = {
-  default: [
-    { symbol: "WIPRO", name: "Wipro Ltd", sector: "IT", ltp: 495, changePercent: 1.8, pe: 18.4, pb: 3.2, roe: 17.8, debtEquity: 0.1, divYield: 0.2, marketCap: "₹2.6L Cr", aiScore: 82, aiVerdict: "Strong Buy" },
-    { symbol: "LTTS", name: "LTIMindtree", sector: "IT", ltp: 4820, changePercent: 0.9, pe: 19.1, pb: 4.8, roe: 24.2, debtEquity: 0.04, divYield: 1.1, marketCap: "₹1.4L Cr", aiScore: 78, aiVerdict: "Buy" },
-    { symbol: "PERSISTENT", name: "Persistent Systems", sector: "IT", ltp: 5340, changePercent: -0.5, pe: 17.2, pb: 6.1, roe: 35.6, debtEquity: 0.0, divYield: 0.5, marketCap: "₹82K Cr", aiScore: 85, aiVerdict: "Strong Buy" },
-    { symbol: "MPHASIS", name: "Mphasis Ltd", sector: "IT", ltp: 2180, changePercent: 1.2, pe: 16.8, pb: 3.9, roe: 22.9, debtEquity: 0.0, divYield: 1.8, marketCap: "₹41K Cr", aiScore: 75, aiVerdict: "Buy" },
-    { symbol: "KPITTECH", name: "KPIT Technologies", sector: "IT", ltp: 1840, changePercent: 2.1, pe: 14.9, pb: 7.2, roe: 48.2, debtEquity: 0.0, divYield: 0.3, marketCap: "₹50K Cr", aiScore: 88, aiVerdict: "Strong Buy" },
-  ],
-};
-
 function getVerdictColor(v: string) {
   if (v === "Strong Buy") return "success";
   if (v === "Buy") return "info";
@@ -59,11 +49,12 @@ export default function AIScreenerPage() {
     if (!q.trim()) return;
     setLoading(true);
     setSearched(false);
+    // The AI screener endpoint is not yet wired — return no fabricated matches.
     setTimeout(() => {
-      setResults(MOCK_RESULTS.default);
+      setResults([]);
       setLoading(false);
       setSearched(true);
-    }, 1200);
+    }, 600);
   }
 
   function saveScreener(q: string) {
@@ -153,7 +144,7 @@ export default function AIScreenerPage() {
           <CardContent className="flex flex-col items-center py-12">
             <div className="flex gap-2 mb-4">
               {[0, 1, 2, 3].map((i) => (
-                <span key={i} className="h-2.5 w-2.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                <span key={i} className="h-2.5 w-2.5 rounded-full bg-ai animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
             <p className="text-sm text-muted-foreground">AI is analyzing 5,000+ stocks…</p>

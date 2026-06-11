@@ -305,11 +305,10 @@ export interface DiscussionPost {
   tags: string[];
 }
 
-// API Response wrapper
+// API Response wrapper — canonical envelope: { message, data }
 export interface ApiResponse<T> {
+  message: string;
   data: T;
-  message?: string;
-  success: boolean;
 }
 
 export interface PagedResponse<T> {

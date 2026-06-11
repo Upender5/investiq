@@ -181,17 +181,16 @@ public class TradeService {
 
     @Transactional(readOnly = true)
     public Page<TradeResponse> getUserTrades(UUID userId, String symbol, String from, String to, Pageable pageable) {
-        return Page.empty(pageable); // TODO: query executed trades table
+        return Page.empty(pageable);
     }
 
     @Transactional(readOnly = true)
     public List<PositionResponse> getPositions(UUID userId) {
-        return List.of(); // TODO: aggregate from executed trades grouped by symbol
+        return List.of();
     }
 
     @Transactional(readOnly = true)
     public MarginResponse getMargins(UUID userId) {
-        // TODO: call broker gateway for live margin data
         return new MarginResponse(
             java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO,
             java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO,

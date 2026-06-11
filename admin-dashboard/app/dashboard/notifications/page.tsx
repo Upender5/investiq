@@ -1,57 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, CheckCheck, Trash2 } from "lucide-react";
-import { notificationApi } from "@/lib/api";
+import { Bell, CheckCheck } from "lucide-react";
+import { useNotifications, useMarkRead, useMarkAllRead } from "@/lib/hooks";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Notification } from "@/types";
 import { twMerge } from "tailwind-merge";
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "notif-001",
-    title: "Trade Executed",
-    message: "Your BUY order for RELIANCE × 10 @ ₹2,450 was executed successfully.",
-    read: false,
-    createdAt: "2025-05-29T10:30:00Z",
-    type: "TRADE",
-  },
-  {
-    id: "notif-002",
-    title: "Funds Added",
-    message: "₹25,000 has been credited to your wallet via UPI.",
-    read: false,
-    createdAt: "2025-05-28T14:15:00Z",
-    type: "WALLET",
-  },
-  {
-    id: "notif-003",
-    title: "Price Alert",
-    message: "TCS has fallen below your alert price of ₹3,700.",
-    read: false,
-    createdAt: "2025-05-27T09:00:00Z",
-    type: "ALERT",
-  },
-  {
-    id: "notif-004",
-    title: "KYC Approved",
-    message: "Your KYC verification has been approved. You can now trade freely.",
-    read: true,
-    createdAt: "2025-05-25T11:00:00Z",
-    type: "SYSTEM",
-  },
-  {
-    id: "notif-005",
-    title: "Limit Order Pending",
-    message: "Your LIMIT BUY order for HDFC × 8 @ ₹1,600 is pending execution.",
-    read: true,
-    createdAt: "2025-05-24T16:30:00Z",
-    type: "TRADE",
-  },
-];
 
 function notifTypeBadge(type: string) {
   const config: Record<string, "success" | "info" | "warning" | "secondary"> = {
@@ -64,32 +19,14 @@ function notifTypeBadge(type: string) {
 }
 
 export default function NotificationsPage() {
-  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
-  const { data: notifications, isLoading } = useQuery<Notification[]>({
-    queryKey: ["notifications"],
-    queryFn: async () => {
-      const res = await notificationApi.get("/notifications?size=50");
-      return res.data?.content ?? res.data;
-    },
-    placeholderData: MOCK_NOTIFICATIONS,
-  });
+  // notification-service: GET /notifications, PUT /{id}/read, PUT /read-all.
+  const { data: notifData, isLoading } = useNotifications();
+  const notifications = notifData ?? [];
 
-  const markReadMutation = useMutation({
-    mutationFn: (id: string) =>
-      notificationApi.put(`/notifications/${id}/read`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
-
-  const markAllReadMutation = useMutation({
-    mutationFn: () => notificationApi.put("/notifications/read-all"),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
+  const markReadMutation = useMarkRead();
+  const markAllReadMutation = useMarkAllRead();
 
   const displayed = (notifications ?? []).filter((n) =>
     filter === "unread" ? !n.read : true
@@ -146,7 +83,7 @@ export default function NotificationsPage() {
       {/* Notification list */}
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-input border-t-indigo-500" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-input border-t-primary" />
         </div>
       ) : displayed.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-muted-foreground/80">
@@ -172,7 +109,7 @@ export default function NotificationsPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     {!notif.read && (
-                      <span className="h-2 w-2 rounded-full bg-indigo-400 flex-shrink-0" />
+                      <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
                     )}
                     <p className="font-semibold text-foreground">{notif.title}</p>
                     {notifTypeBadge(notif.type)}

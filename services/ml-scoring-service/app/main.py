@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import router
+from app.envelope import install_envelope
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -34,6 +35,7 @@ app.add_middleware(
 )
 
 app.include_router(router)
+install_envelope(app)
 
 
 @app.get("/health", tags=["Health"])

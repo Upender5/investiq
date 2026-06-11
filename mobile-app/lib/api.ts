@@ -20,6 +20,22 @@ const SERVICE_URLS = {
   notification: `http://${BASE_IP}:8086`,
 } as const;
 
+// ─── Envelope helpers ───────────────────────────────────────────────────────
+// Every InvestIQ service returns `{ message, data }`. unwrap() returns the inner
+// payload; it tolerates raw bodies so non-conforming endpoints still work.
+export function unwrap<T>(res: AxiosResponse): T {
+  const body = res.data;
+  if (body && typeof body === 'object' && 'data' in body && 'message' in body) {
+    return (body as { data: T }).data;
+  }
+  return body as T;
+}
+
+export function getApiErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
+  const axiosErr = error as AxiosError<{ message?: string }>;
+  return axiosErr?.response?.data?.message ?? (error as Error)?.message ?? fallback;
+}
+
 // ─── Interceptor helpers ──────────────────────────────────────────────────────
 async function attachToken(
   config: InternalAxiosRequestConfig
@@ -32,13 +48,19 @@ async function attachToken(
   return config;
 }
 
-function handleUnauthorized(error: AxiosError): Promise<never> {
-  if (error.response?.status === 401) {
-    auth.logout().then(() => {
-      router.replace('/(auth)/login');
-    });
-  }
-  return Promise.reject(error);
+const AUTH_PATHS = ['/auth/refresh', '/auth/login', '/auth/otp', '/auth/register'];
+const isAuthEndpoint = (url?: string) => !!url && AUTH_PATHS.some((p) => url.includes(p));
+
+// Single-flight refresh shared across all concurrent 401s.
+let refreshPromise: Promise<string> | null = null;
+
+async function refreshAccessToken(): Promise<string> {
+  const refreshToken = await auth.getRefreshToken();
+  if (!refreshToken) throw new Error('No refresh token');
+  const res = await axios.post(`${SERVICE_URLS.auth}/api/v1/auth/refresh`, { refreshToken });
+  const tokens = unwrap<{ accessToken: string; refreshToken: string }>(res);
+  await auth.saveTokens(tokens as never);
+  return tokens.accessToken;
 }
 
 // ─── Factory ──────────────────────────────────────────────────────────────────
@@ -52,7 +74,33 @@ function createClient(baseURL: string): AxiosInstance {
   instance.interceptors.request.use(attachToken);
   instance.interceptors.response.use(
     (res: AxiosResponse) => res,
-    handleUnauthorized
+    async (error: AxiosError) => {
+      const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+      const status = error.response?.status;
+
+      if (status === 401 && original && !original._retry && !isAuthEndpoint(original.url)) {
+        original._retry = true;
+        try {
+          refreshPromise ??= refreshAccessToken().finally(() => {
+            refreshPromise = null;
+          });
+          const newToken = await refreshPromise;
+          original.headers = original.headers ?? {};
+          original.headers['Authorization'] = `Bearer ${newToken}`;
+          return instance(original);
+        } catch {
+          await auth.logout();
+          router.replace('/(auth)/login');
+          return Promise.reject(error);
+        }
+      }
+
+      if (status === 401) {
+        await auth.logout();
+        router.replace('/(auth)/login');
+      }
+      return Promise.reject(error);
+    }
   );
 
   return instance;

@@ -1,6 +1,7 @@
 package com.investiq.fund.controller;
 
 import com.investiq.fund.dto.request.InvestRequest;
+import com.investiq.fund.dto.request.RedemptionRequest;
 import com.investiq.fund.dto.request.SipRequest;
 import com.investiq.fund.dto.response.*;
 import com.investiq.fund.security.AuthenticatedUser;

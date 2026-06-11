@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X } from "lucide-react";
-import { tradeApi } from "@/lib/api";
+import { useTradeHistory, usePlaceOrder } from "@/lib/hooks";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ import {
   TableHeader,
   TableCell,
 } from "@/components/ui/table";
-import type { Trade, PlaceOrderRequest, TradeSide, TradeType } from "@/types";
+import type { TradeSide, TradeType } from "@/types";
 
 function formatINR(value: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -28,49 +27,6 @@ function formatINR(value: number) {
     maximumFractionDigits: 2,
   }).format(value);
 }
-
-const MOCK_TRADES: Trade[] = [
-  {
-    orderId: "ord-001",
-    symbol: "RELIANCE",
-    side: "BUY",
-    type: "MARKET",
-    quantity: 10,
-    price: 2450.0,
-    status: "EXECUTED",
-    createdAt: "2025-05-20T10:30:00Z",
-  },
-  {
-    orderId: "ord-002",
-    symbol: "TCS",
-    side: "SELL",
-    type: "LIMIT",
-    quantity: 5,
-    price: 3800.0,
-    status: "PENDING",
-    createdAt: "2025-05-22T14:15:00Z",
-  },
-  {
-    orderId: "ord-003",
-    symbol: "INFY",
-    side: "BUY",
-    type: "MARKET",
-    quantity: 20,
-    price: 1500.0,
-    status: "EXECUTED",
-    createdAt: "2025-05-25T09:00:00Z",
-  },
-  {
-    orderId: "ord-004",
-    symbol: "HDFC",
-    side: "BUY",
-    type: "LIMIT",
-    quantity: 8,
-    price: 1600.0,
-    status: "CANCELLED",
-    createdAt: "2025-05-28T11:45:00Z",
-  },
-];
 
 const orderSchema = z
   .object({
@@ -111,19 +67,13 @@ function tradeStatusBadge(status: string) {
 }
 
 export default function TradesPage() {
-  const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
-  const { data: trades, isLoading } = useQuery<Trade[]>({
-    queryKey: ["trades"],
-    queryFn: async () => {
-      const res = await tradeApi.get("/trades?size=50&sort=createdAt,desc");
-      return res.data?.content ?? res.data;
-    },
-    placeholderData: MOCK_TRADES,
-  });
+  // Executed trades from trade-service (GET /trades).
+  const { data: tradesData, isLoading } = useTradeHistory(50);
+  const trades = tradesData ?? [];
 
   const {
     register,
@@ -140,36 +90,38 @@ export default function TradesPage() {
   const side = watch("side");
   const type = watch("type");
 
-  const placeMutation = useMutation({
-    mutationFn: (payload: PlaceOrderRequest) =>
-      tradeApi.post("/trades", payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["trades"] });
-      setFormSuccess("Order placed successfully!");
-      setFormError(null);
-      reset();
-      setTimeout(() => {
-        setShowForm(false);
-        setFormSuccess(null);
-      }, 1500);
-    },
-    onError: (err: unknown) => {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "Failed to place order";
-      setFormError(msg);
-    },
-  });
+  // POST /orders — async order placement; the hook attaches the Idempotency-Key
+  // and invalidates trade/analytics caches on success.
+  const placeMutation = usePlaceOrder();
 
   const onSubmit = (values: OrderFormValues) => {
     setFormError(null);
-    placeMutation.mutate({
-      symbol: values.symbol,
-      side: values.side as TradeSide,
-      type: values.type as TradeType,
-      quantity: values.quantity,
-      price: values.type === "LIMIT" ? values.price : undefined,
-    });
+    placeMutation.mutate(
+      {
+        symbol: values.symbol,
+        side: values.side as TradeSide,
+        type: values.type as TradeType,
+        quantity: values.quantity,
+        price: values.type === "LIMIT" ? values.price : undefined,
+      },
+      {
+        onSuccess: () => {
+          setFormSuccess("Order placed successfully!");
+          setFormError(null);
+          reset();
+          setTimeout(() => {
+            setShowForm(false);
+            setFormSuccess(null);
+          }, 1500);
+        },
+        onError: (err: unknown) => {
+          const msg =
+            (err as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message ?? "Failed to place order";
+          setFormError(msg);
+        },
+      }
+    );
   };
 
   return (
@@ -333,7 +285,14 @@ export default function TradesPage() {
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-input border-t-indigo-500" />
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-input border-t-primary" />
+            </div>
+          ) : trades.length === 0 ? (
+            <div className="flex flex-col items-center py-14 text-muted-foreground/60">
+              <p className="text-sm font-medium text-foreground/60">No trades yet</p>
+              <p className="mt-1 text-xs text-muted-foreground/50">
+                Your executed orders will appear here once you start trading.
+              </p>
             </div>
           ) : (
             <Table>

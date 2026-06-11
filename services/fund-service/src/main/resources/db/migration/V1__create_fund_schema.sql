@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS sip_mandates (
     scheme_code           VARCHAR(20)     NOT NULL REFERENCES mutual_funds(scheme_code),
     folio_number          VARCHAR(50),
     monthly_amount        NUMERIC(12,2)   NOT NULL,
-    sip_date              SMALLINT        NOT NULL CHECK(sip_date BETWEEN 1 AND 28),
+    sip_date              INTEGER         NOT NULL CHECK(sip_date BETWEEN 1 AND 28),
     status                VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',
     bank_account_id       UUID            NOT NULL,
     start_date            DATE            NOT NULL,

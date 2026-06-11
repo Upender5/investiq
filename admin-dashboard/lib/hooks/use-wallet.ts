@@ -19,7 +19,6 @@ export function useWallet() {
     queryKey: ["wallet", "balance", userId],
     queryFn: async () => unwrap(await walletApi.get(`/wallets/by-user/${userId}`)),
     enabled: !!userId,
-    placeholderData: { id: "", available: 12450, locked: 0, total: 12450 },
   });
 }
 

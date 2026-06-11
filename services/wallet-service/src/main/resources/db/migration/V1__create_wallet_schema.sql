@@ -12,7 +12,7 @@ CREATE TABLE wallets (
     id              UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID            UNIQUE,                   -- NULL for system wallets
     wallet_type     wallet_type     NOT NULL DEFAULT 'USER',
-    currency        CHAR(3)         NOT NULL DEFAULT 'INR',
+    currency        VARCHAR(3)      NOT NULL DEFAULT 'INR',
     balance         NUMERIC(20,2)   NOT NULL DEFAULT 0 CHECK (balance >= 0),
     locked_balance  NUMERIC(20,2)   NOT NULL DEFAULT 0 CHECK (locked_balance >= 0),
     status          wallet_status   NOT NULL DEFAULT 'ACTIVE',

@@ -3,14 +3,13 @@
 /** Hooks for goals (user-service port 8082, /api/v1/goals) + AI goal planner (port 9001). */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { aiAdvisorApi, goalsApi, unwrap } from "@/lib/api";
-import { MOCK_GOALS } from "@/lib/mock-data";
 import type { Goal, GoalType } from "@/types";
 
 export function useGoals() {
   return useQuery<Goal[]>({
     queryKey: ["goals"],
     queryFn: async () => unwrap(await goalsApi.get("/goals")),
-    placeholderData: MOCK_GOALS,
+    placeholderData: [],
   });
 }
 

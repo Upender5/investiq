@@ -11,27 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { DiscussionPost } from "@/types";
 
-const MOCK_POSTS: DiscussionPost[] = [
-  { id: "p1", author: "Karthik Rajan", initials: "KR", content: "RELIANCE showing strong volume accumulation near ₹2580 support. RSI at 42 — classic oversold territory. I'm adding here with a target of ₹2,850. Stop loss at ₹2,520. What do others think?", symbol: "RELIANCE", likes: 48, replies: 23, createdAt: "2026-06-09T08:30:00Z", tags: ["technical", "accumulate"] },
-  { id: "p2", author: "Sunita Patel", initials: "SP", content: "Just completed the Investing 101 course on InvestIQ — absolutely brilliant for beginners! My takeaway: index funds + SIP + patience = wealth. Started a ₹5000/month SIP in Nifty 50 index fund today. Small steps 🚀", likes: 92, replies: 41, createdAt: "2026-06-09T07:15:00Z", tags: ["beginner", "sip", "mindset"] },
-  { id: "p3", author: "Vijay Malhotra", initials: "VM", content: "Intraday update: TCS bouncing off 200 DMA at ₹3580. Took a long at ₹3595 with target ₹3680 and SL ₹3560. Risk:Reward = 1:2.4. Strict risk management is key — never risk more than 1% of capital on a single trade.", symbol: "TCS", likes: 35, replies: 18, createdAt: "2026-06-08T14:20:00Z", tags: ["intraday", "technical"] },
-  { id: "p4", author: "Meera Krishnan", initials: "MK", content: "TCS Q4 FY26 results beat estimates! Revenue grew 7.2% QoQ. Management commentary very bullish on AI-related demand. Upgrading my target from ₹3,900 to ₹4,200. LTCG-friendly holding for me! 📈", symbol: "TCS", likes: 67, replies: 29, createdAt: "2026-06-08T12:00:00Z", tags: ["results", "fundamental"] },
-  { id: "p5", author: "Dev Kapoor", initials: "DK", content: "Iron Condor on NIFTY at 24000 strikes — collected ₹8,400 premium. IV at 65th percentile makes this attractive. Will close at 50% profit. Options sellers, how's your theta working today?", likes: 28, replies: 15, createdAt: "2026-06-07T10:30:00Z", tags: ["options", "strategy", "f&o"] },
-];
-
-const TRENDING_STOCKS = [
-  { symbol: "RELIANCE", posts: 142, sentiment: "Bullish", change: 1.37 },
-  { symbol: "TCS", posts: 98, sentiment: "Neutral", change: -1.22 },
-  { symbol: "INFY", posts: 76, sentiment: "Bullish", change: 1.33 },
-  { symbol: "BAJFINANCE", posts: 65, sentiment: "Bullish", change: 1.71 },
-  { symbol: "ADANIENT", posts: 54, sentiment: "Bearish", change: -2.14 },
-];
-
-const EXPERT_CHANNELS = [
-  { name: "NIFTY Daily Picks", expert: "TechPro Vijay", followers: 12400, badge: "SEBI RA", posts: 3 },
-  { name: "Fundamental Gems", expert: "Meera FA", followers: 8900, badge: "CFA", posts: 1 },
-  { name: "Options Flow", expert: "OptionsKing Dev", followers: 6700, badge: "Verified", posts: 5 },
-];
+// The community service is not yet available — no fabricated posts/channels.
+const TRENDING_STOCKS: { symbol: string; posts: number; sentiment: string; change: number }[] = [];
+const EXPERT_CHANNELS: { name: string; expert: string; followers: number; badge: string; posts: number }[] = [];
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -49,7 +31,7 @@ function sentimentColor(s: string) {
 export default function CommunityPage() {
   const [tab, setTab] = useState("feed");
   const [newPost, setNewPost] = useState("");
-  const [posts, setPosts] = useState<DiscussionPost[]>(MOCK_POSTS);
+  const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [liked, setLiked] = useState<Set<string>>(new Set());
 
   function toggleLike(id: string) {
@@ -89,7 +71,6 @@ export default function CommunityPage() {
           </h2>
           <p className="text-sm text-muted-foreground">Discuss stocks, share insights, learn from fellow investors</p>
         </div>
-        <Badge variant="info">12,450 members online</Badge>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -131,6 +112,12 @@ export default function CommunityPage() {
               </Card>
 
               {/* Posts */}
+              {posts.length === 0 && (
+                <Card className="py-12 text-center text-muted-foreground/80">
+                  <MessageCircle className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                  <p>No discussions yet. Be the first to post.</p>
+                </Card>
+              )}
               {posts.map((post) => (
                 <Card key={post.id} className="hover:border-input transition-colors">
                   <div className="flex items-start gap-3">

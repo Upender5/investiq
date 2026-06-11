@@ -35,6 +35,5 @@ export function usePortfolioHealth() {
     queryKey: ["scoring", "portfolio-health", userId],
     queryFn: async () => unwrap(await scoringApi.get(`/scoring/portfolio-health/${userId}`)),
     enabled: !!userId,
-    placeholderData: { overallScore: 68 },
   });
 }

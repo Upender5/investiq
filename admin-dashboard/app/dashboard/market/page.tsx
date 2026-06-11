@@ -1,41 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Search, TrendingUp, TrendingDown, BarChart2, ArrowUpDown } from "lucide-react";
-import { marketApi } from "@/lib/api";
+import { Search, TrendingUp, TrendingDown, ArrowUpDown } from "lucide-react";
+import { useStocks } from "@/lib/hooks";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import type { StockQuote } from "@/types";
 
 function formatINR(value: number) {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value);
 }
-
-const MOCK_QUOTES: StockQuote[] = [
-  { symbol: "RELIANCE", name: "Reliance Industries Ltd", ltp: 2620.5, change: 35.5, changePercent: 1.37, volume: 4520000, high: 2640, low: 2590, sector: "Energy", marketCap: 17750000000000, pe: 24.8 },
-  { symbol: "TCS", name: "Tata Consultancy Services", ltp: 3650, change: -45, changePercent: -1.22, volume: 1230000, high: 3710, low: 3630, sector: "IT", marketCap: 13200000000000, pe: 28.1 },
-  { symbol: "INFY", name: "Infosys Ltd", ltp: 1680, change: 22, changePercent: 1.33, volume: 3100000, high: 1695, low: 1660, sector: "IT", marketCap: 6980000000000, pe: 23.5 },
-  { symbol: "HDFC", name: "HDFC Bank Ltd", ltp: 1540, change: -18.5, changePercent: -1.19, volume: 5600000, high: 1565, low: 1530, sector: "Banking", marketCap: 11550000000000, pe: 19.2 },
-  { symbol: "WIPRO", name: "Wipro Ltd", ltp: 495, change: 8.75, changePercent: 1.8, volume: 2800000, high: 500, low: 485, sector: "IT", marketCap: 2600000000000, pe: 18.4 },
-  { symbol: "BAJFINANCE", name: "Bajaj Finance Ltd", ltp: 7120, change: 120, changePercent: 1.71, volume: 980000, high: 7180, low: 7050, sector: "NBFC", marketCap: 4300000000000, pe: 31.2 },
-  { symbol: "HCLTECH", name: "HCL Technologies Ltd", ltp: 1340, change: -15, changePercent: -1.11, volume: 1540000, high: 1360, low: 1325, sector: "IT", marketCap: 3630000000000, pe: 22.1 },
-  { symbol: "ICICIBANK", name: "ICICI Bank Ltd", ltp: 1125, change: 12.5, changePercent: 1.12, volume: 7200000, high: 1135, low: 1110, sector: "Banking", marketCap: 7920000000000, pe: 17.8 },
-  { symbol: "KOTAKBANK", name: "Kotak Mahindra Bank", ltp: 1890, change: -22, changePercent: -1.15, volume: 1890000, high: 1920, low: 1875, sector: "Banking", marketCap: 3760000000000, pe: 20.4 },
-  { symbol: "NESTLEIND", name: "Nestle India Ltd", ltp: 2320, change: 18.5, changePercent: 0.8, volume: 220000, high: 2340, low: 2295, sector: "FMCG", marketCap: 2240000000000, pe: 65.8 },
-  { symbol: "MARUTI", name: "Maruti Suzuki India", ltp: 12450, change: 185, changePercent: 1.51, volume: 340000, high: 12520, low: 12280, sector: "Auto", marketCap: 3760000000000, pe: 28.4 },
-  { symbol: "ADANIENT", name: "Adani Enterprises Ltd", ltp: 2840, change: -62, changePercent: -2.14, volume: 1240000, high: 2910, low: 2820, sector: "Conglomerate", marketCap: 3230000000000, pe: 45.2 },
-];
-
-const INDEX_DATA = [
-  { name: "NIFTY 50", value: 24580.5, change: 142.3, changePercent: 0.58 },
-  { name: "SENSEX", value: 81240.8, change: 468.5, changePercent: 0.58 },
-  { name: "NIFTY BANK", value: 53420.2, change: -182.4, changePercent: -0.34 },
-  { name: "NIFTY IT", value: 39840.6, change: 284.1, changePercent: 0.72 },
-];
 
 const SECTORS = ["All", "IT", "Banking", "Energy", "NBFC", "FMCG", "Auto", "Conglomerate"];
 
@@ -46,16 +22,11 @@ export default function MarketPage() {
   const [tab, setTab] = useState("all");
   const [sortBy, setSortBy] = useState<"name" | "change" | "volume">("change");
 
-  const { data: quotes } = useQuery<StockQuote[]>({
-    queryKey: ["market-quotes"],
-    queryFn: async () => {
-      const res = await marketApi.get("/market/quotes/top");
-      return res.data;
-    },
-    placeholderData: MOCK_QUOTES,
-  });
+  // Live instrument list from market-data-service (GET /stocks).
+  const { data: stocks, isLoading } = useStocks();
+  const quotes = stocks ?? [];
 
-  let filtered = (quotes ?? []).filter((q) => {
+  let filtered = quotes.filter((q) => {
     const matchSearch = !searchTerm || q.symbol.toLowerCase().includes(searchTerm.toLowerCase()) || q.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchSector = sector === "All" || q.sector === sector;
     const matchTab = tab === "all" ? true : tab === "gainers" ? q.changePercent > 0 : q.changePercent < 0;
@@ -73,23 +44,6 @@ export default function MarketPage() {
       <div>
         <h2 className="text-2xl font-bold text-foreground">Market</h2>
         <p className="text-sm text-muted-foreground">Live NSE/BSE prices · Click any stock for details and trading</p>
-      </div>
-
-      {/* Index Ticker */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {INDEX_DATA.map((idx) => {
-          const isUp = idx.changePercent >= 0;
-          return (
-            <Card key={idx.name} className="py-3 px-4">
-              <p className="text-xs text-muted-foreground/80">{idx.name}</p>
-              <p className="text-lg font-bold text-foreground font-mono mt-0.5">{idx.value.toLocaleString("en-IN")}</p>
-              <p className={`text-xs font-semibold mt-0.5 flex items-center gap-1 ${isUp ? "text-profit" : "text-loss"}`}>
-                {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                {isUp ? "+" : ""}{idx.changePercent.toFixed(2)}%
-              </p>
-            </Card>
-          );
-        })}
       </div>
 
       {/* Tabs + Search + Filters */}
@@ -142,10 +96,14 @@ export default function MarketPage() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center py-16">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-input border-t-primary" />
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-muted-foreground/80">
           <Search className="mb-3 h-10 w-10 opacity-30" />
-          <p>No results found</p>
+          <p>No stocks available</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

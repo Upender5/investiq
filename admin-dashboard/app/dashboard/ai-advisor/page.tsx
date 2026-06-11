@@ -6,7 +6,6 @@ import {
   BookOpen, Lightbulb, RotateCcw, User, Bot,
 } from "lucide-react";
 import { useAiChat } from "@/lib/hooks";
-import { AI_DISCLAIMER } from "@/lib/mock-data";
 import { formatTime } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import type { AIMessage } from "@/types";
@@ -19,24 +18,6 @@ const QUICK_PROMPTS = [
   { icon: Lightbulb, text: "Find undervalued IT stocks for me", color: "text-warning" },
   { icon: Sparkles, text: "Should I start an SIP or lumpsum?", color: "text-ai" },
 ];
-
-/** Offline fallback when the ai-advisor service (port 9001) is unreachable. */
-function generateOfflineResponse(question: string): string {
-  const q = question.toLowerCase();
-  if (q.includes("risk")) {
-    return `**Portfolio Risk Analysis:**\n\n🔴 **High Concentration Risk:** IT sector = 42% of portfolio (recommended: <25%)\n\n🟡 **Moderate Concerns:**\n• TCS and HDFC showing negative P&L — watch support levels\n• No defensive sector exposure (FMCG, Pharma, Utilities)\n\n🟢 **Strengths:**\n• RELIANCE provides energy sector hedge\n• WIPRO momentum is bullish\n• Portfolio Beta ~0.92 (slightly defensive)\n\n**Risk Score: 6.2/10** (Moderate-High)\n\nConsider adding 1 FMCG stock (HUL or Nestle) to reduce volatility.\n\n*${AI_DISCLAIMER}*`;
-  }
-  if (q.includes("retirement") || q.includes("monthly")) {
-    return `**Retirement Planning Analysis:**\n\nAssuming you're 26 years old targeting retirement at 60:\n\n📊 **Goal:** ₹5 Crore corpus in 34 years\n\n**Monthly Investment Required:**\n• Equity MF SIP: **₹8,500/month** (assuming 12% CAGR)\n• Debt/PPF: **₹3,000/month** (assuming 7% returns)\n• **Total: ₹11,500/month**\n\n**Recommended Allocation:**\n• 70% Large Cap Index Fund (NIFTY 50)\n• 20% Flexi Cap Fund\n• 10% International Fund\n\n💡 **Pro Tip:** Step up your SIP by 10% annually — this alone can add ₹1.2 Cr to your corpus!\n\n*${AI_DISCLAIMER}*`;
-  }
-  if (q.includes("sip") || q.includes("lumpsum")) {
-    return `**SIP vs Lumpsum — Which is Better?**\n\n**SIP (Systematic Investment Plan):**\n✅ Rupee cost averaging — buy more units when markets fall\n✅ Disciplined investing — removes emotion\n✅ Start with as little as ₹100/month\n✅ **Best for:** Regular income earners, volatile markets\n\n**Lumpsum:**\n✅ Better returns when markets are at a low\n✅ Full investment works from Day 1\n✅ **Best for:** When you have a large corpus and markets are undervalued\n\n**InvestIQ Recommendation:**\nFor most investors, **SIP wins** due to market uncertainty. If markets correct 10%+, consider deploying 20-30% as lumpsum on top of your regular SIP.\n\n*${AI_DISCLAIMER}*`;
-  }
-  if (q.includes("p/e") || q.includes("pe ratio")) {
-    return `**P/E Ratio Explained Simply:**\n\nP/E (Price-to-Earnings) ratio tells you how much you're paying for every ₹1 of a company's profit.\n\n**Formula:** P/E = Stock Price ÷ Earnings Per Share (EPS)\n\n**Example:** If TCS trades at ₹3,650 and EPS is ₹130:\nP/E = 3650 ÷ 130 = **28.1x**\n\n**How to use it:**\n• P/E < 15: Generally considered cheap (value zone)\n• P/E 15–25: Fair value for quality companies\n• P/E > 30: Expensive — growth must justify it\n\n**Sector context matters!** IT sector typically trades at 22–30x P/E, while banking trades at 12–18x.\n\n*${AI_DISCLAIMER}*`;
-  }
-  return `Great question! Based on your portfolio profile, here are my key insights:\n\n**Portfolio Status:** Your current portfolio of ₹1,25,430 shows a strong 17.1% return overall.\n\n**Key Observations:**\n• IT sector is overweight at ~42% (INFY + TCS + HCLTECH) vs recommended 25%\n• Good diversification across Energy (Reliance) and Banking (HDFC)\n• WIPRO shows strong momentum at +17.86% P&L\n\n**Recommendations:**\n1. Consider booking partial profits in INFY (up 12%) to reduce IT concentration\n2. Add 1–2 defensive positions (FMCG or Pharma) for better sector balance\n3. Your idle cash could generate ~6% in liquid funds\n\n*${AI_DISCLAIMER}*`;
-}
 
 const WELCOME_MESSAGE: AIMessage = {
   id: "welcome",
@@ -73,10 +54,10 @@ export default function AICopilotPage() {
       // POST /api/v1/ai/chat on the ai-advisor service
       const res = await chat.mutateAsync({ message: text, conversation_id: conversationId });
       if (res.conversation_id) setConversationId(res.conversation_id);
-      content = (res.answer ?? res.message ?? generateOfflineResponse(text)) +
+      content = (res.answer ?? res.message ?? "I couldn't generate a response right now.") +
         (res.disclaimer ? `\n\n*${res.disclaimer}*` : "");
     } catch {
-      content = generateOfflineResponse(text);
+      content = "⚠️ The AI advisor is unavailable right now. Please try again in a moment.";
     }
 
     setMessages((prev) => [

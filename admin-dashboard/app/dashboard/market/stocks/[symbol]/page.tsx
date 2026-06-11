@@ -7,7 +7,6 @@ import {
   BarChart2, Building2, Users, Calendar,
 } from "lucide-react";
 import { useQuote, useOhlcv, useStockFinancials, usePlaceOrder, useStockAnalysis, useSentiment } from "@/lib/hooks";
-import { MOCK_STOCK_ANALYSIS } from "@/lib/mock-data";
 import { formatINR } from "@/lib/format";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,22 +18,6 @@ const fmt = formatINR;
 function fmtCr(v: number) {
   return `₹${(v / 1e7).toFixed(2)} Cr`;
 }
-
-const FINANCIALS = {
-  quarterly: [
-    { period: "Q3 FY25", revenue: "₹2,35,481 Cr", pat: "₹19,878 Cr", eps: "₹29.4" },
-    { period: "Q2 FY25", revenue: "₹2,23,645 Cr", pat: "₹18,951 Cr", eps: "₹28.1" },
-    { period: "Q1 FY25", revenue: "₹2,08,450 Cr", pat: "₹17,448 Cr", eps: "₹25.8" },
-    { period: "Q4 FY24", revenue: "₹2,39,705 Cr", pat: "₹21,243 Cr", eps: "₹31.5" },
-  ],
-};
-
-const PEER_DATA = [
-  { name: "Reliance", pe: 24.8, pb: 2.3, roe: 10.2, roce: 11.8 },
-  { name: "ONGC", pe: 8.4, pb: 1.1, roe: 14.2, roce: 16.1 },
-  { name: "BPCL", pe: 12.1, pb: 2.0, roe: 18.7, roce: 19.4 },
-  { name: "IOC", pe: 10.8, pb: 1.5, roe: 16.1, roce: 17.2 },
-];
 
 export default function StockDetailPage() {
   const params = useParams();
@@ -86,9 +69,8 @@ export default function StockDetailPage() {
   const aiAnalysis =
     aiData?.paragraphs ??
     aiData?.analysis ??
-    MOCK_STOCK_ANALYSIS[symbol] ??
-    ["AI analysis not available for this stock."];
-  const quarterly = financials?.quarterly ?? FINANCIALS.quarterly;
+    ["AI analysis is not available for this stock yet."];
+  const quarterly = financials?.quarterly ?? [];
   const sentimentSignal = (sentiment as { signal?: string } | undefined)?.signal;
 
   return (
@@ -235,15 +217,11 @@ export default function StockDetailPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/60">
-                        {PEER_DATA.map((row) => (
-                          <tr key={row.name} className={row.name === q?.symbol ? "bg-primary/10" : ""}>
-                            <td className="py-3 font-medium text-foreground">{row.name}</td>
-                            <td className="py-3 text-foreground/80">{row.pe}</td>
-                            <td className="py-3 text-foreground/80">{row.pb}</td>
-                            <td className="py-3 text-profit">{row.roe}%</td>
-                            <td className="py-3 text-profit">{row.roce}%</td>
-                          </tr>
-                        ))}
+                        <tr>
+                          <td colSpan={5} className="py-10 text-center text-muted-foreground">
+                            Peer comparison data is not available yet.
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>

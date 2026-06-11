@@ -10,29 +10,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import type { PortfolioHealth, RebalanceSuggestion } from "@/types";
-
-const MOCK_HEALTH: PortfolioHealth = {
-  overallScore: 68,
-  diversificationScore: 52,
-  riskReturnScore: 74,
-  goalAlignmentScore: 80,
-  qualityScore: 71,
-  costEfficiencyScore: 88,
-  insights: [
-    "IT sector concentration is 42% — significantly above recommended 25%. This increases systematic risk.",
-    "Portfolio Sharpe ratio of 1.24 is above the benchmark of 1.0 — good risk-adjusted returns.",
-    "No exposure to defensive sectors (FMCG, Healthcare, Utilities) — portfolio is cyclical heavy.",
-    "TCS and HDFC showing negative P&L — consider reviewing if fundamentals have changed.",
-    "Strong momentum in WIPRO (+17.86%) and INFY (+12%) — consider partial profit booking.",
-  ],
-  actions: [
-    { symbol: "TCS", companyName: "Tata Consultancy Services", action: "SELL", quantity: 2, amount: 7300, reason: "IT sector overweight — reduce by 20%", currentWeight: 14.6, targetWeight: 10 },
-    { symbol: "INFY", companyName: "Infosys Ltd", action: "SELL", quantity: 5, amount: 8400, reason: "IT sector overweight — take partial profits at +12%", currentWeight: 13.4, targetWeight: 10 },
-    { symbol: "HDFCBANK", companyName: "HDFC Bank Ltd", action: "BUY", quantity: 5, amount: 7700, reason: "Banking underweight vs NIFTY weight of 12%", currentWeight: 9.8, targetWeight: 13 },
-    { symbol: "NESTLEIND", companyName: "Nestle India Ltd", action: "BUY", quantity: 3, amount: 7200, reason: "Add FMCG exposure — zero defensive holdings", currentWeight: 0, targetWeight: 5 },
-  ],
-};
+import { usePortfolioHealth } from "@/lib/hooks";
+import type { RebalanceSuggestion } from "@/types";
 
 const DIMENSIONS = [
   { key: "diversificationScore", label: "Diversification", icon: Shield, description: "Sector spread, correlation, concentration" },
@@ -87,8 +66,33 @@ function getStatusIcon(score: number) {
 }
 
 export default function PortfolioHealthPage() {
-  const health = MOCK_HEALTH;
+  // ml-scoring-service: GET /scoring/portfolio-health/{userId}
+  const { data: health, isLoading } = usePortfolioHealth();
   const [executing, setExecuting] = useState(false);
+
+  const overallScore = health?.overallScore ?? 0;
+  const scores = health as unknown as Record<string, number> | undefined;
+  const insights = health?.recommendations ?? [];
+  // Rebalancing actions are not yet exposed by the scoring API.
+  const actions: RebalanceSuggestion[] = [];
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-ai border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!health) {
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center text-muted-foreground">
+        <Brain className="mb-3 h-10 w-10 text-ai/40" />
+        <p className="text-lg font-medium text-foreground/70">No health score yet</p>
+        <p className="mt-1 text-sm">Build a portfolio to get an AI-computed health score.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -109,7 +113,7 @@ export default function PortfolioHealthPage() {
         {/* Overall Score */}
         <Card className="flex flex-col items-center justify-center py-8 border-ai/20">
           <p className="mb-4 text-sm font-medium text-muted-foreground">Overall Health Score</p>
-          <ScoreGauge score={health.overallScore} />
+          <ScoreGauge score={overallScore} />
           <div className="mt-4 flex gap-2">
             <Badge variant="warning">Moderate Health</Badge>
             <Badge variant="secondary">Updated now</Badge>
@@ -122,7 +126,7 @@ export default function PortfolioHealthPage() {
             <CardHeader><CardTitle>Score Breakdown</CardTitle></CardHeader>
             <CardContent className="space-y-5">
               {DIMENSIONS.map(({ key, label, icon: Icon, description }) => {
-                const score = health[key];
+                const score = scores?.[key] ?? 0;
                 return (
                   <div key={key}>
                     <div className="flex items-center justify-between mb-2">
@@ -154,7 +158,10 @@ export default function PortfolioHealthPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {health.insights.map((insight, i) => {
+          {insights.length === 0 && (
+            <p className="text-sm text-muted-foreground/70">No AI insights available yet.</p>
+          )}
+          {insights.map((insight, i) => {
             const isWarning = insight.toLowerCase().includes("above") || insight.toLowerCase().includes("no exposure") || insight.toLowerCase().includes("negative");
             return (
               <div key={i} className={`flex gap-3 rounded-lg px-4 py-3 text-sm ${isWarning ? "bg-yellow-500/10 border border-yellow-500/20" : "bg-card/60 border border-border/70"}`}>
@@ -171,6 +178,7 @@ export default function PortfolioHealthPage() {
       </Card>
 
       {/* Rebalancing Actions */}
+      {actions.length > 0 && (
       <Card>
         <CardHeader>
           <CardTitle>Recommended Actions</CardTitle>
@@ -187,7 +195,7 @@ export default function PortfolioHealthPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {health.actions.map((action) => (
+            {actions.map((action) => (
               <div key={action.symbol} className={`flex items-center justify-between rounded-xl border px-4 py-3 ${action.action === "BUY" ? "border-green-500/20 bg-green-500/5" : "border-red-500/20 bg-red-500/5"}`}>
                 <div className="flex items-center gap-3">
                   <Badge variant={action.action === "BUY" ? "success" : "danger"}>{action.action}</Badge>
@@ -209,10 +217,11 @@ export default function PortfolioHealthPage() {
             ))}
           </div>
           <p className="mt-4 text-xs text-muted-foreground/80">
-            Executing all actions will place basket orders worth ₹{health.actions.reduce((s, a) => s + a.amount, 0).toLocaleString("en-IN")}. Review each before proceeding.
+            Executing all actions will place basket orders worth ₹{actions.reduce((s, a) => s + a.amount, 0).toLocaleString("en-IN")}. Review each before proceeding.
           </p>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

@@ -1,8 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { Wallet, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
-import { walletApi } from "@/lib/api";
+import { useWallet, useWalletTransactions, useDeposit, useWithdraw } from "@/lib/hooks";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +13,6 @@ import {
   TableHeader,
   TableCell,
 } from "@/components/ui/table";
-import type { WalletBalance, WalletTransaction } from "@/types";
-
 function formatINR(value: number) {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -23,57 +20,6 @@ function formatINR(value: number) {
     maximumFractionDigits: 2,
   }).format(value);
 }
-
-const MOCK_BALANCE: WalletBalance = {
-  available: 45230.5,
-  locked: 12500.0,
-  total: 57730.5,
-};
-
-const MOCK_TXNS: WalletTransaction[] = [
-  {
-    id: "txn-001",
-    type: "DEPOSIT",
-    amount: 50000,
-    description: "Bank transfer — HDFC xxxx4521",
-    createdAt: "2025-05-01T10:00:00Z",
-  },
-  {
-    id: "txn-002",
-    type: "BUY",
-    amount: -24500,
-    description: "RELIANCE × 10 @ ₹2450",
-    createdAt: "2025-05-05T11:30:00Z",
-  },
-  {
-    id: "txn-003",
-    type: "DEPOSIT",
-    amount: 25000,
-    description: "UPI — user@okicici",
-    createdAt: "2025-05-10T09:15:00Z",
-  },
-  {
-    id: "txn-004",
-    type: "SELL",
-    amount: 19000,
-    description: "WIPRO × 20 @ ₹950",
-    createdAt: "2025-05-15T14:00:00Z",
-  },
-  {
-    id: "txn-005",
-    type: "WITHDRAWAL",
-    amount: -10000,
-    description: "Withdraw to SBI xxxx7890",
-    createdAt: "2025-05-18T16:45:00Z",
-  },
-  {
-    id: "txn-006",
-    type: "BUY",
-    amount: -12000,
-    description: "INFY × 8 @ ₹1500",
-    createdAt: "2025-05-22T10:20:00Z",
-  },
-];
 
 function txnTypeBadge(type: string) {
   const config: Record<string, { variant: "success" | "danger" | "info" | "secondary"; label: string }> = {
@@ -87,23 +33,30 @@ function txnTypeBadge(type: string) {
 }
 
 export default function WalletPage() {
-  const { data: balance } = useQuery<WalletBalance>({
-    queryKey: ["wallet-balance"],
-    queryFn: async () => {
-      const res = await walletApi.get("/wallet/balance");
-      return res.data;
-    },
-    placeholderData: MOCK_BALANCE,
-  });
+  // wallet-service: GET /wallets/by-user/{userId} + /{walletId}/transactions.
+  const { data: wallet } = useWallet();
+  const balance = wallet;
+  const { data: txnData, isLoading } = useWalletTransactions(wallet?.id);
+  const transactions = txnData ?? [];
 
-  const { data: transactions, isLoading } = useQuery<WalletTransaction[]>({
-    queryKey: ["wallet-transactions"],
-    queryFn: async () => {
-      const res = await walletApi.get("/wallet/transactions?size=50");
-      return res.data?.content ?? res.data;
-    },
-    placeholderData: MOCK_TXNS,
-  });
+  const deposit = useDeposit();
+  const withdraw = useWithdraw();
+
+  function handleDeposit() {
+    if (!wallet?.id) return;
+    const input = window.prompt("Amount to add (₹):");
+    const amount = Number(input);
+    if (!input || Number.isNaN(amount) || amount <= 0) return;
+    deposit.mutate({ walletId: wallet.id, amount });
+  }
+
+  function handleWithdraw() {
+    if (!wallet?.id) return;
+    const input = window.prompt("Amount to withdraw (₹):");
+    const amount = Number(input);
+    if (!input || Number.isNaN(amount) || amount <= 0) return;
+    withdraw.mutate({ walletId: wallet.id, amount });
+  }
 
   return (
     <div className="space-y-6">
@@ -159,10 +112,20 @@ export default function WalletPage() {
 
       {/* Action buttons */}
       <div className="flex gap-3">
-        <Button variant="success">
+        <Button
+          variant="success"
+          onClick={handleDeposit}
+          disabled={!wallet?.id}
+          loading={deposit.isPending}
+        >
           <ArrowDownCircle className="h-4 w-4" /> Add Funds
         </Button>
-        <Button variant="secondary">
+        <Button
+          variant="secondary"
+          onClick={handleWithdraw}
+          disabled={!wallet?.id}
+          loading={withdraw.isPending}
+        >
           <ArrowUpCircle className="h-4 w-4" /> Withdraw
         </Button>
       </div>
@@ -175,7 +138,7 @@ export default function WalletPage() {
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-input border-t-indigo-500" />
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-input border-t-primary" />
             </div>
           ) : (
             <Table>

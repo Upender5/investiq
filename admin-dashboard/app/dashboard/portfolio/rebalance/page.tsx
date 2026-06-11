@@ -8,40 +8,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DonutChart } from "@/components/charts/spark-line";
+import { useAllocation } from "@/lib/hooks";
 import type { RebalanceSuggestion, AllocationSlice } from "@/types";
-
-const CURRENT_ALLOCATION: AllocationSlice[] = [
-  { name: "IT", value: 42, color: "#6366f1" },
-  { name: "Energy", value: 21, color: "#f59e0b" },
-  { name: "Banking", value: 12, color: "#3b82f6" },
-  { name: "FMCG", value: 0, color: "#22c55e" },
-  { name: "Cash", value: 10, color: "#94a3b8" },
-  { name: "Others", value: 15, color: "#64748b" },
-];
-
-const TARGET_ALLOCATION: AllocationSlice[] = [
-  { name: "IT", value: 25, color: "#6366f1" },
-  { name: "Energy", value: 20, color: "#f59e0b" },
-  { name: "Banking", value: 20, color: "#3b82f6" },
-  { name: "FMCG", value: 15, color: "#22c55e" },
-  { name: "Cash", value: 5, color: "#94a3b8" },
-  { name: "Others", value: 15, color: "#64748b" },
-];
-
-const MOCK_SUGGESTIONS: RebalanceSuggestion[] = [
-  { symbol: "TCS", companyName: "Tata Consultancy Services", action: "SELL", quantity: 2, amount: 7300, reason: "IT sector overweight (42% vs target 25%)", currentWeight: 14.6, targetWeight: 10.0 },
-  { symbol: "INFY", companyName: "Infosys Ltd", action: "SELL", quantity: 5, amount: 8400, reason: "IT sector overweight — take partial profits at +12% P&L", currentWeight: 13.4, targetWeight: 8.5 },
-  { symbol: "HDFCBANK", companyName: "HDFC Bank Ltd", action: "BUY", quantity: 5, amount: 7700, reason: "Banking underweight (12% vs target 20%) — quality BFSI addition", currentWeight: 9.8, targetWeight: 13.0 },
-  { symbol: "NESTLEIND", companyName: "Nestle India Ltd", action: "BUY", quantity: 3, amount: 6450, reason: "Zero FMCG exposure vs target 15% — defensive addition needed", currentWeight: 0, targetWeight: 5.0 },
-  { symbol: "HDFCLIFE", companyName: "HDFC Life Insurance", action: "BUY", quantity: 10, amount: 6400, reason: "Insurance sector exposure improves diversification", currentWeight: 0, targetWeight: 4.0 },
-];
 
 function fmt(v: number) {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(v);
 }
 
 export default function RebalancePage() {
-  const [selected, setSelected] = useState<Set<string>>(new Set(MOCK_SUGGESTIONS.map((s) => s.symbol)));
+  // analytics-service: GET /analytics/allocation provides the live sector split.
+  // Target allocation and AI rebalancing suggestions are not yet exposed by a backend.
+  const { data: allocData } = useAllocation();
+  const currentAllocation = (allocData ?? []) as AllocationSlice[];
+  const targetAllocation: AllocationSlice[] = [];
+  const suggestions: RebalanceSuggestion[] = [];
+
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [executing, setExecuting] = useState(false);
   const [executed, setExecuted] = useState(false);
 
@@ -54,7 +36,7 @@ export default function RebalancePage() {
     });
   }
 
-  const selectedSuggestions = MOCK_SUGGESTIONS.filter((s) => selected.has(s.symbol));
+  const selectedSuggestions = suggestions.filter((s) => selected.has(s.symbol));
   const totalBuy = selectedSuggestions.filter((s) => s.action === "BUY").reduce((sum, s) => sum + s.amount, 0);
   const totalSell = selectedSuggestions.filter((s) => s.action === "SELL").reduce((sum, s) => sum + s.amount, 0);
 
@@ -104,9 +86,9 @@ export default function RebalancePage() {
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-yellow-400" />Current Allocation</CardTitle></CardHeader>
           <CardContent>
             <div className="flex items-center gap-6">
-              <DonutChart data={CURRENT_ALLOCATION} size={140} />
+              <DonutChart data={currentAllocation} size={140} />
               <div className="flex-1 space-y-2">
-                {CURRENT_ALLOCATION.map((s) => (
+                {currentAllocation.map((s) => (
                   <div key={s.name}>
                     <div className="flex justify-between text-xs mb-1">
                       <span className="flex items-center gap-1.5">
@@ -127,9 +109,9 @@ export default function RebalancePage() {
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-profit" />Target Allocation</CardTitle></CardHeader>
           <CardContent>
             <div className="flex items-center gap-6">
-              <DonutChart data={TARGET_ALLOCATION} size={140} />
+              <DonutChart data={targetAllocation} size={140} />
               <div className="flex-1 space-y-2">
-                {TARGET_ALLOCATION.map((s) => (
+                {targetAllocation.map((s) => (
                   <div key={s.name}>
                     <div className="flex justify-between text-xs mb-1">
                       <span className="flex items-center gap-1.5">
@@ -164,7 +146,13 @@ export default function RebalancePage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {MOCK_SUGGESTIONS.map((s) => (
+          {suggestions.length === 0 && (
+            <div className="flex flex-col items-center py-10 text-center text-muted-foreground/80">
+              <Brain className="mb-2 h-8 w-8 opacity-30" />
+              <p className="text-sm">No rebalancing actions available yet.</p>
+            </div>
+          )}
+          {suggestions.map((s) => (
             <div
               key={s.symbol}
               onClick={() => toggleSuggestion(s.symbol)}

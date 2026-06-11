@@ -2,7 +2,7 @@
 
 > Production-ready API design for an AI-powered investment platform for Indian college students.
 > All endpoints require `Authorization: Bearer <access_token>` unless marked PUBLIC.
-> All responses follow: `{ success, data, code, message, timestamp }` (ApiResponse wrapper).
+> All responses follow the canonical envelope: `{ message, data }` (see [API_INTEGRATION_ARCHITECTURE.md](frontend/API_INTEGRATION_ARCHITECTURE.md)).
 
 ---
 
@@ -293,39 +293,27 @@
 
 ## Standard Response Formats
 
+All endpoints return the canonical envelope `{ message, data }` — no other top-level fields.
+
 ### Success
 ```json
-{
-  "success": true,
-  "data": { ... },
-  "timestamp": "2025-06-09T10:30:00Z"
-}
+{ "message": "Success", "data": { ... } }
 ```
 
 ### Validation Error (400)
 ```json
-{
-  "success": false,
-  "code": "VALIDATION_ERROR",
-  "message": "phone: Must be a valid Indian mobile number",
-  "timestamp": "2025-06-09T10:30:00Z"
-}
+{ "message": "Validation failed", "data": { "phone": "Must be a valid Indian mobile number" } }
 ```
 
 ### Business Error (422)
 ```json
-{
-  "success": false,
-  "code": "INSUFFICIENT_FUNDS",
-  "message": "Wallet balance ₹450 is insufficient for order value ₹500",
-  "timestamp": "2025-06-09T10:30:00Z"
-}
+{ "message": "Wallet balance ₹450 is insufficient for order value ₹500", "data": null }
 ```
 
 ### Paginated Response
 ```json
 {
-  "success": true,
+  "message": "Success",
   "data": {
     "content": [ ... ],
     "page": 0,

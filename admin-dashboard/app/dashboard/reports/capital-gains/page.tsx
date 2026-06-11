@@ -7,16 +7,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useCapitalGains } from "@/lib/hooks";
 import type { CapitalGain } from "@/types";
-
-const MOCK_GAINS: CapitalGain[] = [
-  { symbol: "INFY", companyName: "Infosys Ltd", purchaseDate: "2024-08-15", saleDate: "2026-01-10", quantity: 10, purchasePrice: 1420, salePrice: 1680, gain: 2600, gainType: "LTCG" },
-  { symbol: "WIPRO", companyName: "Wipro Ltd", purchaseDate: "2025-03-01", saleDate: "2026-02-14", quantity: 20, purchasePrice: 380, salePrice: 495, gain: 2300, gainType: "STCG" },
-  { symbol: "BAJFINANCE", companyName: "Bajaj Finance Ltd", purchaseDate: "2025-06-10", saleDate: "2026-05-20", quantity: 3, purchasePrice: 6200, salePrice: 7120, gain: 2760, gainType: "STCG" },
-  { symbol: "HCLTECH", companyName: "HCL Technologies", purchaseDate: "2024-01-05", saleDate: "2025-09-18", quantity: 15, purchasePrice: 1180, salePrice: 1340, gain: 2400, gainType: "LTCG" },
-  { symbol: "ICICIBANK", companyName: "ICICI Bank Ltd", purchaseDate: "2025-11-01", saleDate: "2026-04-15", quantity: 25, purchasePrice: 1050, salePrice: 1125, gain: 1875, gainType: "STCG" },
-  { symbol: "TCS", companyName: "TCS Ltd", purchaseDate: "2025-04-20", saleDate: "2025-12-01", quantity: 2, purchasePrice: 3900, salePrice: 3650, gain: -500, gainType: "STCG" },
-];
 
 function fmt(v: number) {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(v);
@@ -31,9 +23,13 @@ function holdingPeriod(purchaseDate: string, saleDate: string) {
 export default function CapitalGainsPage() {
   const [tab, setTab] = useState("all");
 
-  const stcg = MOCK_GAINS.filter((g) => g.gainType === "STCG");
-  const ltcg = MOCK_GAINS.filter((g) => g.gainType === "LTCG");
-  const filtered = tab === "stcg" ? stcg : tab === "ltcg" ? ltcg : MOCK_GAINS;
+  // analytics-service: GET /analytics/reports/capital-gains
+  const { data, isLoading } = useCapitalGains();
+  const gains = (data as CapitalGain[] | undefined) ?? [];
+
+  const stcg = gains.filter((g) => g.gainType === "STCG");
+  const ltcg = gains.filter((g) => g.gainType === "LTCG");
+  const filtered = tab === "stcg" ? stcg : tab === "ltcg" ? ltcg : gains;
 
   const totalSTCG = stcg.reduce((s, g) => s + g.gain, 0);
   const totalLTCG = ltcg.reduce((s, g) => s + g.gain, 0);
@@ -109,7 +105,7 @@ export default function CapitalGainsPage() {
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList>
               {[
-                { value: "all", label: `All (${MOCK_GAINS.length})` },
+                { value: "all", label: `All (${gains.length})` },
                 { value: "stcg", label: `STCG (${stcg.length})` },
                 { value: "ltcg", label: `LTCG (${ltcg.length})` },
               ].map(({ value, label }) => (
@@ -129,6 +125,13 @@ export default function CapitalGainsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
+                {!isLoading && filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="px-3 py-10 text-center text-muted-foreground">
+                      No capital-gains transactions for this period.
+                    </td>
+                  </tr>
+                )}
                 {filtered.map((g, i) => (
                   <tr key={`${g.symbol}-${i}`} className="hover:bg-accent/30">
                     <td className="px-3 py-3">

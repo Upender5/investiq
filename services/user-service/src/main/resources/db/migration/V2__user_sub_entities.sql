@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS user_addresses (
     line2       VARCHAR(200),
     city        VARCHAR(100) NOT NULL,
     state       VARCHAR(100) NOT NULL,
-    pincode     CHAR(6)     NOT NULL,
+    pincode     VARCHAR(6)  NOT NULL,
     country     VARCHAR(50) NOT NULL DEFAULT 'India',
     is_primary  BOOLEAN     NOT NULL DEFAULT FALSE,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),

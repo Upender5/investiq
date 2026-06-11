@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="100" viewBox="0 0 300 100" role="img" aria-label="InvestIQ">
+  <title>InvestIQ — primary logo (dark / reversed background)</title>
+  <rect x="18" y="26" width="13" height="48" rx="6.5" fill="#FFFFFF"/>
+  <circle cx="63" cy="50" r="23" fill="none" stroke="#FFFFFF" stroke-width="13"/>
+  <polyline points="49,64 79,33" fill="none" stroke="#22C55E" stroke-width="12" stroke-linecap="round"/>
+  <polyline points="66,33 79,33 79,46" fill="none" stroke="#22C55E" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="108" y="64" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="40" font-weight="700" fill="#FFFFFF" letter-spacing="-1">Invest<tspan fill="#22C55E">IQ</tspan></text>
+</svg>
