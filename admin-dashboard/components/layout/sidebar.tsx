@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, BarChart3, ArrowLeftRight, TrendingUp, Wallet,
   Bell, Brain, BookOpen, Users, FileText, User, ChevronRight, ShieldCheck,
+  Leaf,
 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ThemeToggle } from "@/lib/theme";
 import { Logo } from "@/components/brand/brand-mark";
 import { useProfile } from "@/lib/hooks";
@@ -106,6 +107,17 @@ const navSections: NavSection[] = [
   },
 ];
 
+/* Gamification level mapping — UX Research Section 4.3 */
+function getLevelName(totalSaved: number): string {
+  if (totalSaved >= 100000) return "Wealth Builder";
+  if (totalSaved >= 50000) return "Investor";
+  if (totalSaved >= 10000) return "Saver";
+  if (totalSaved >= 2000) return "Explorer";
+  if (totalSaved >= 500) return "Sapling";
+  if (totalSaved >= 100) return "Sprout";
+  return "Seedling";
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const { data: profile } = useProfile();
@@ -115,6 +127,9 @@ export function Sidebar() {
     "/dashboard/ai-advisor",
     "/dashboard/market",
   ]);
+
+  /* Gamification — derive level from goals saved amount (fallback to 0) */
+  const levelName = useMemo(() => getLevelName(profile?.totalSaved ?? 0), [profile?.totalSaved]);
 
   function toggle(href: string) {
     setExpanded((prev) =>
@@ -234,7 +249,10 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* ── User Footer ── */}
+      {/* ── User Footer ──
+       * UX Research Section 4.3: Level system visible at all times.
+       * Shows current gamification level + KYC status.
+       */}
       <div className="border-t border-border p-3">
         <div className="flex items-center gap-2.5 rounded-xl bg-accent/50 px-2.5 py-2">
           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-[11px] font-bold text-white shadow-sm">
@@ -242,8 +260,12 @@ export function Sidebar() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold text-foreground">{displayName || "Your account"}</p>
-            <div className="flex items-center gap-1 mt-0.5">
-              <div className="h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0" />
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="flex items-center gap-1">
+                <Leaf className="h-2.5 w-2.5 text-primary/70" />
+                <p className="text-[10px] font-medium text-primary/80">{levelName}</p>
+              </div>
+              <span className="text-muted-foreground/30">|</span>
               <p className="text-[10px] text-muted-foreground/60">
                 {profile?.kycStatus === "VERIFIED" ? "KYC Verified" : "Active"}
               </p>
