@@ -9,19 +9,19 @@ import { twMerge } from "tailwind-merge";
 
 const PATH_TITLES: Record<string, string> = {
   "/dashboard":                         "Overview",
-  "/dashboard/market":                  "Markets · Stocks",
-  "/dashboard/funds":                   "Markets · Mutual Funds",
-  "/dashboard/ipo":                     "Markets · IPO",
-  "/dashboard/portfolio":               "Portfolio · Holdings",
-  "/dashboard/portfolio/rebalance":     "Portfolio · Rebalancing",
+  "/dashboard/market":                  "Markets",
+  "/dashboard/funds":                   "Mutual Funds",
+  "/dashboard/ipo":                     "IPO",
+  "/dashboard/portfolio":               "Holdings",
+  "/dashboard/portfolio/rebalance":     "Rebalancing",
   "/dashboard/trades":                  "Trades",
-  "/dashboard/ai-advisor":              "AI Advisor · Copilot",
-  "/dashboard/ai-advisor/health":       "AI Advisor · Portfolio Health",
-  "/dashboard/ai-advisor/goals":        "AI Advisor · Goal Planner",
-  "/dashboard/ai-advisor/screener":     "AI Advisor · Screener",
+  "/dashboard/ai-advisor":              "AI Advisor",
+  "/dashboard/ai-advisor/health":       "Portfolio Health",
+  "/dashboard/ai-advisor/goals":        "Goal Planner",
+  "/dashboard/ai-advisor/screener":     "Screener",
   "/dashboard/wallet":                  "Wallet",
-  "/dashboard/reports":                 "Reports · Overview",
-  "/dashboard/reports/capital-gains":   "Reports · Capital Gains",
+  "/dashboard/reports":                 "Reports",
+  "/dashboard/reports/capital-gains":   "Capital Gains",
   "/dashboard/learn":                   "Learn",
   "/dashboard/community":               "Community",
   "/dashboard/notifications":           "Notifications",
@@ -43,7 +43,8 @@ export function Header() {
   const { data: movers } = useTopGainers();
   const { data: unread } = useUnreadCount();
 
-  // Live ticker from real top-gainers (no fabricated index values). Duplicated for a seamless loop.
+  // Calm market strip: subtle, no-flash summary of market activity.
+  // UX Research: "No flashing prices or green/red ticker animations"
   const tickerSource = movers ?? [];
   const ticker = [...tickerSource, ...tickerSource];
 
@@ -57,13 +58,18 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex flex-col border-b border-border bg-background/95 backdrop-blur-md">
-      {/* ── Live Top-Movers Ticker Strip ── */}
+      {/* ── Calm Market Strip ──
+       * UX Research v1.0: "No flashing prices, no Top Movers list"
+       * Shows a gentle scrolling summary instead of aggressive ticker.
+       * Green dot is subtle (no blink animation), labels are neutral.
+       */}
       {ticker.length > 0 && (
         <div className="flex items-center gap-3 overflow-hidden border-b border-border/40 bg-muted/20 px-4 py-1.5">
           <div className="flex flex-shrink-0 items-center gap-1.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-live" />
-            <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/50 select-none">
-              NSE Live
+            {/* Subtle static indicator — no animate-live flashing */}
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500/70" />
+            <span className="text-[10px] font-semibold tracking-widest uppercase text-muted-foreground/50 select-none">
+              Market
             </span>
           </div>
           <div className="relative flex-1 overflow-hidden">
@@ -72,13 +78,13 @@ export function Header() {
                 const positive = (q.changePercent ?? 0) >= 0;
                 return (
                   <div key={`${q.symbol}-${i}`} className="flex items-center gap-1.5 text-xs">
-                    <span className="font-semibold text-foreground/80">{q.symbol}</span>
-                    <span className="font-mono font-medium text-foreground/90">{formatINR(q.ltp)}</span>
+                    <span className="font-semibold text-foreground/70">{q.symbol}</span>
+                    <span className="font-mono font-medium text-foreground/80">{formatINR(q.ltp)}</span>
                     <span className={twMerge(
-                      "flex items-center gap-0.5 font-semibold",
-                      positive ? "text-profit" : "text-loss"
+                      "flex items-center gap-0.5 font-medium",
+                      positive ? "text-emerald-500/80" : "text-red-400/80"
                     )}>
-                      {positive ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
+                      {positive ? <TrendingUp className="h-2.5 w-2.5 opacity-60" /> : <TrendingDown className="h-2.5 w-2.5 opacity-60" />}
                       {positive ? "+" : ""}{(q.changePercent ?? 0).toFixed(2)}%
                     </span>
                   </div>
@@ -94,10 +100,10 @@ export function Header() {
 
       {/* ── Main Header Row ── */}
       <div className="flex items-center justify-between gap-4 px-6 py-3">
-        {/* Page title */}
+        {/* Page title — editorial serif per UX spec */}
         <div className="min-w-0">
           <div className="flex items-baseline gap-2">
-            <h1 className="text-lg font-bold text-foreground truncate">{primary}</h1>
+            <h1 className="text-xl font-bold text-foreground font-editorial tracking-tight">{primary}</h1>
             {secondary && (
               <span className="hidden sm:block text-sm text-muted-foreground font-normal">
                 {secondary}
@@ -111,7 +117,7 @@ export function Header() {
           {/* Search */}
           <button className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground hover:border-border cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring">
             <Search className="h-3.5 w-3.5 flex-shrink-0" />
-            <span className="hidden lg:inline text-xs">Search…</span>
+            <span className="hidden lg:inline text-xs">Search</span>
             <kbd className="hidden lg:inline rounded border border-border bg-background px-1 py-0.5 text-[10px] font-mono text-muted-foreground/50">
               ⌘K
             </kbd>
@@ -125,7 +131,7 @@ export function Header() {
           >
             <Bell className="h-4 w-4" />
             {!!unread && unread > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white shadow-sm">
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground shadow-sm">
                 {unread > 99 ? "99+" : unread}
               </span>
             )}
