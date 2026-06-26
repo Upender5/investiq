@@ -18,6 +18,7 @@ import {
   useAiRecommendations,
   usePortfolioHealth,
   useWallet,
+  useProfile,
 } from "@/lib/hooks";
 import { formatINR, formatCompactINR, formatDate } from "@/lib/format";
 import { StatsCard } from "@/components/dashboard/stats-card";
@@ -30,7 +31,7 @@ import {
   Table, TableHead, TableBody, TableRow, TableHeader, TableCell,
 } from "@/components/ui/table";
 import { twMerge } from "tailwind-merge";
-import type { GoalType, PnlHistory } from "@/types";
+import type { GoalType, PnlHistory, Trade } from "@/types";
 
 const GOAL_ICONS: Record<GoalType, React.ElementType> = {
   RETIREMENT: Target, HOUSE: Home, EDUCATION: GraduationCap, EMERGENCY: Shield,
@@ -43,15 +44,21 @@ const INSIGHT_STYLES: Record<string, { icon: React.ElementType; color: string; b
   action:      { icon: Brain,         color: "text-ai",           bg: "bg-ai/10 border-ai/20" },
 };
 
-/* Mock weekly trade volume — replace with analytics hook when available */
-const WEEKLY_VOLUME = [
-  { day: "Mon", buy: 42, sell: 18 },
-  { day: "Tue", buy: 67, sell: 31 },
-  { day: "Wed", buy: 55, sell: 44 },
-  { day: "Thu", buy: 81, sell: 22 },
-  { day: "Fri", buy: 93, sell: 57 },
-  { day: "Sat", buy: 28, sell: 12 },
-];
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** Aggregate real trade history into per-weekday BUY/SELL counts for the volume chart. */
+function buildWeeklyVolume(trades: Trade[]): { day: string; buy: number; sell: number }[] {
+  const base = WEEKDAYS.map((day) => ({ day, buy: 0, sell: 0 }));
+  for (const t of trades) {
+    const d = new Date(t.createdAt);
+    if (Number.isNaN(d.getTime())) continue;
+    const bucket = base[d.getDay()];
+    if (t.side === "BUY") bucket.buy += 1;
+    else if (t.side === "SELL") bucket.sell += 1;
+  }
+  // Mon→Sat ordering (drop Sunday-first index)
+  return [...base.slice(1), base[0]].slice(0, 6);
+}
 
 function tradeSideBadge(side: string) {
   return side === "BUY"
@@ -82,11 +89,13 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const { data: analytics } = useDashboardAnalytics();
-  const { data: recentTrades } = useTradeHistory(5);
+  const { data: recentTrades } = useTradeHistory(50);
   const { data: goals } = useGoals();
   const { data: insights } = useAiRecommendations();
   const { data: health } = usePortfolioHealth();
   const { data: wallet } = useWallet();
+  const { data: profile } = useProfile();
+  const firstName = profile?.name?.split(" ")[0];
 
   const portfolioValue    = analytics?.portfolioValue    ?? 0;
   const totalPnl          = analytics?.totalPnl          ?? 0;
@@ -95,6 +104,8 @@ export default function DashboardPage() {
   const todayPnl          = analytics?.todayPnl          ?? 0;
   const pnlHistory: PnlHistory[] = analytics?.pnlHistory ?? [];
   const sparkValues = pnlHistory.map((p) => p.value);
+  const weeklyVolume = buildWeeklyVolume(recentTrades ?? []);
+  const hasVolume = weeklyVolume.some((d) => d.buy > 0 || d.sell > 0);
 
   return (
     <div className="space-y-6 max-w-screen-2xl">
@@ -102,7 +113,7 @@ export default function DashboardPage() {
       {/* ── Page Header ── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Good morning, Upender 👋</h2>
+          <h2 className="text-2xl font-bold text-foreground">Good morning{firstName ? `, ${firstName}` : ""} 👋</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             Here&apos;s what&apos;s happening with your portfolio today.
           </p>
@@ -277,8 +288,11 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
+            {!hasVolume && (
+              <p className="pb-2 text-xs text-muted-foreground/70">No trades this week yet.</p>
+            )}
             <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={WEEKLY_VOLUME} barGap={2} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <BarChart data={weeklyVolume} barGap={2} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(215 25% 27% / 0.5)" vertical={false} />
                 <XAxis
                   dataKey="day"

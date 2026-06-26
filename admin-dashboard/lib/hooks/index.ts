@@ -23,3 +23,4 @@ export * from "./use-ai";
 export * from "./use-scoring";
 export * from "./use-notifications";
 export * from "./use-user";
+export * from "./use-admin";

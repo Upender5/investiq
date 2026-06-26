@@ -35,6 +35,40 @@ export function useUnreadCount() {
   });
 }
 
+export interface ChannelConfig {
+  push: boolean;
+  email: boolean;
+  sms: boolean;
+  whatsapp: boolean;
+}
+
+export interface NotificationSettings {
+  userId?: string;
+  pushEnabled: boolean;
+  emailEnabled: boolean;
+  smsEnabled: boolean;
+  whatsappEnabled: boolean;
+  categories?: Record<string, ChannelConfig>;
+}
+
+/** GET /notifications/settings — channel + category preferences. */
+export function useNotificationSettings() {
+  return useQuery<NotificationSettings>({
+    queryKey: ["notifications", "settings"],
+    queryFn: async () => unwrap(await notificationApi.get("/notifications/settings")),
+  });
+}
+
+/** PUT /notifications/settings — partial update of channel/category preferences. */
+export function useUpdateNotificationSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Partial<NotificationSettings>) =>
+      notificationApi.put("/notifications/settings", payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications", "settings"] }),
+  });
+}
+
 export function useMarkRead() {
   const qc = useQueryClient();
   return useMutation({

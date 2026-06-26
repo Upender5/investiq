@@ -4,12 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, BarChart3, ArrowLeftRight, TrendingUp, Wallet,
-  Bell, Brain, BookOpen, Users, FileText, User, ChevronRight,
+  Bell, Brain, BookOpen, Users, FileText, User, ChevronRight, ShieldCheck,
 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import { useState } from "react";
 import { ThemeToggle } from "@/lib/theme";
 import { Logo } from "@/components/brand/brand-mark";
+import { useProfile } from "@/lib/hooks";
+import { isAdmin } from "@/lib/auth";
 
 interface NavItem {
   href: string;
@@ -106,6 +108,9 @@ const navSections: NavSection[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: profile } = useProfile();
+  const displayName = profile?.name ?? "";
+  const initial = displayName?.[0]?.toUpperCase() ?? "?";
   const [expanded, setExpanded] = useState<string[]>([
     "/dashboard/ai-advisor",
     "/dashboard/market",
@@ -122,6 +127,11 @@ export function Sidebar() {
     return pathname.startsWith(href);
   }
 
+  // Admin section is appended only for staff roles (RBAC).
+  const sections: NavSection[] = isAdmin()
+    ? [...navSections, { label: "ADMIN", items: [{ href: "/dashboard/admin", label: "Admin Console", icon: ShieldCheck }] }]
+    : navSections;
+
   return (
     <aside className="flex h-screen w-60 flex-col bg-background border-r border-border flex-shrink-0">
       {/* ── Logo ── */}
@@ -131,7 +141,7 @@ export function Sidebar() {
 
       {/* ── Navigation ── */}
       <nav className="flex flex-1 flex-col overflow-y-auto py-3 px-2">
-        {navSections.map(({ label, items }) => (
+        {sections.map(({ label, items }) => (
           <div key={label} className="mb-2">
             <p className="px-3 mb-1.5 text-[9px] font-bold tracking-widest text-muted-foreground/40 uppercase select-none">
               {label}
@@ -228,13 +238,15 @@ export function Sidebar() {
       <div className="border-t border-border p-3">
         <div className="flex items-center gap-2.5 rounded-xl bg-accent/50 px-2.5 py-2">
           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-[11px] font-bold text-white shadow-sm">
-            U
+            {initial}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-foreground">Upender</p>
+            <p className="truncate text-xs font-semibold text-foreground">{displayName || "Your account"}</p>
             <div className="flex items-center gap-1 mt-0.5">
               <div className="h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0" />
-              <p className="text-[10px] text-muted-foreground/60">Pro Plan · Active</p>
+              <p className="text-[10px] text-muted-foreground/60">
+                {profile?.kycStatus === "VERIFIED" ? "KYC Verified" : "Active"}
+              </p>
             </div>
           </div>
           <ThemeToggle className="h-7 w-7 flex-shrink-0" />

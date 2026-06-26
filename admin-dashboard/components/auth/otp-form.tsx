@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BrandMark } from "@/components/brand/brand-mark";
+import { GoogleSignInButton } from "@/components/auth/google-signin";
+import { SocialButtons } from "@/components/auth/social-buttons";
 import type { AuthTokens } from "@/types";
 
 const phoneSchema = z.object({
@@ -192,6 +194,21 @@ export function OtpForm() {
             )}
           </CardContent>
         </Card>
+
+        {/* Social login — only on the initial step */}
+        {step === "phone" && (
+          <div className="mt-5">
+            <div className="flex items-center gap-3">
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground/70">or continue with</span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <div className="mt-4 flex flex-col gap-3">
+              <GoogleSignInButton onError={setServerError} />
+              <SocialButtons />
+            </div>
+          </div>
+        )}
 
         <p className="mt-6 text-center text-xs text-muted-foreground/80">
           InvestIQ · For Indian College Students · Investment decisions carry

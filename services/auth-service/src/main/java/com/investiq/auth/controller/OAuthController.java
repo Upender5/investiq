@@ -1,5 +1,6 @@
 package com.investiq.auth.controller;
 
+import com.investiq.auth.dto.request.OAuthCodeRequest;
 import com.investiq.auth.dto.request.OAuthLoginRequest;
 import com.investiq.auth.dto.response.ApiResponse;
 import com.investiq.auth.dto.response.AuthResponse;
@@ -28,5 +29,17 @@ public class OAuthController {
     @Operation(summary = "Login or register with an Apple identity token")
     public ApiResponse<AuthResponse> appleLogin(@Valid @RequestBody OAuthLoginRequest request) {
         return ApiResponse.ok(oAuthService.loginWithApple(request.idToken(), request.deviceToken()));
+    }
+
+    @PostMapping("/github")
+    @Operation(summary = "Login or register with a GitHub authorization code")
+    public ApiResponse<AuthResponse> githubLogin(@Valid @RequestBody OAuthCodeRequest request) {
+        return ApiResponse.ok(oAuthService.loginWithGithub(request.code(), request.redirectUri(), request.deviceToken()));
+    }
+
+    @PostMapping("/facebook")
+    @Operation(summary = "Login or register with a Facebook authorization code")
+    public ApiResponse<AuthResponse> facebookLogin(@Valid @RequestBody OAuthCodeRequest request) {
+        return ApiResponse.ok(oAuthService.loginWithFacebook(request.code(), request.redirectUri(), request.deviceToken()));
     }
 }

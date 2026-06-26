@@ -3,31 +3,9 @@
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, Search, TrendingUp, TrendingDown, LogOut } from "lucide-react";
 import { logout } from "@/lib/auth";
+import { useProfile, useTopGainers, useUnreadCount } from "@/lib/hooks";
+import { formatINR } from "@/lib/format";
 import { twMerge } from "tailwind-merge";
-
-interface MarketIndex {
-  name: string;
-  value: string;
-  pct: string;
-  positive: boolean;
-}
-
-/* Mock NSE indices — replace with live WebSocket data from market-data service */
-const INDICES: MarketIndex[] = [
-  { name: "NIFTY 50",   value: "24,332.15", pct: "+0.76%", positive: true },
-  { name: "SENSEX",     value: "80,248.32", pct: "+0.68%", positive: true },
-  { name: "NIFTY BANK", value: "52,148.60", pct: "-0.24%", positive: false },
-  { name: "NIFTY IT",   value: "43,621.85", pct: "+0.72%", positive: true },
-  { name: "NIFTY MID",  value: "46,890.40", pct: "+1.12%", positive: true },
-  { name: "GOLD",       value: "₹72,450",   pct: "+0.31%", positive: true },
-  /* duplicate set for seamless loop */
-  { name: "NIFTY 50",   value: "24,332.15", pct: "+0.76%", positive: true },
-  { name: "SENSEX",     value: "80,248.32", pct: "+0.68%", positive: true },
-  { name: "NIFTY BANK", value: "52,148.60", pct: "-0.24%", positive: false },
-  { name: "NIFTY IT",   value: "43,621.85", pct: "+0.72%", positive: true },
-  { name: "NIFTY MID",  value: "46,890.40", pct: "+1.12%", positive: true },
-  { name: "GOLD",       value: "₹72,450",   pct: "+0.31%", positive: true },
-];
 
 const PATH_TITLES: Record<string, string> = {
   "/dashboard":                         "Overview",
@@ -61,6 +39,17 @@ export function Header() {
   const router = useRouter();
   const { primary, secondary } = getTitle(pathname);
 
+  const { data: profile } = useProfile();
+  const { data: movers } = useTopGainers();
+  const { data: unread } = useUnreadCount();
+
+  // Live ticker from real top-gainers (no fabricated index values). Duplicated for a seamless loop.
+  const tickerSource = movers ?? [];
+  const ticker = [...tickerSource, ...tickerSource];
+
+  const displayName = profile?.name ?? "";
+  const initial = displayName?.[0]?.toUpperCase() ?? "?";
+
   const handleLogout = () => {
     logout();
     router.push("/login");
@@ -68,38 +57,40 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex flex-col border-b border-border bg-background/95 backdrop-blur-md">
-      {/* ── Market Ticker Strip ── */}
-      <div className="flex items-center gap-3 overflow-hidden border-b border-border/40 bg-muted/20 px-4 py-1.5">
-        <div className="flex flex-shrink-0 items-center gap-1.5">
-          <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-live" />
-          <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/50 select-none">
-            NSE Live
+      {/* ── Live Top-Movers Ticker Strip ── */}
+      {ticker.length > 0 && (
+        <div className="flex items-center gap-3 overflow-hidden border-b border-border/40 bg-muted/20 px-4 py-1.5">
+          <div className="flex flex-shrink-0 items-center gap-1.5">
+            <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-live" />
+            <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/50 select-none">
+              NSE Live
+            </span>
+          </div>
+          <div className="relative flex-1 overflow-hidden">
+            <div className="flex animate-ticker items-center gap-8 whitespace-nowrap">
+              {ticker.map((q, i) => {
+                const positive = (q.changePercent ?? 0) >= 0;
+                return (
+                  <div key={`${q.symbol}-${i}`} className="flex items-center gap-1.5 text-xs">
+                    <span className="font-semibold text-foreground/80">{q.symbol}</span>
+                    <span className="font-mono font-medium text-foreground/90">{formatINR(q.ltp)}</span>
+                    <span className={twMerge(
+                      "flex items-center gap-0.5 font-semibold",
+                      positive ? "text-profit" : "text-loss"
+                    )}>
+                      {positive ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
+                      {positive ? "+" : ""}{(q.changePercent ?? 0).toFixed(2)}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <span className="flex-shrink-0 text-[10px] font-medium text-muted-foreground/40 select-none">
+            IST
           </span>
         </div>
-        <div className="relative flex-1 overflow-hidden">
-          <div className="flex animate-ticker items-center gap-8 whitespace-nowrap">
-            {INDICES.map((idx, i) => (
-              <div key={i} className="flex items-center gap-1.5 text-xs">
-                <span className="font-semibold text-foreground/80">{idx.name}</span>
-                <span className="font-mono font-medium text-foreground/90">{idx.value}</span>
-                <span className={twMerge(
-                  "flex items-center gap-0.5 font-semibold",
-                  idx.positive ? "text-profit" : "text-loss"
-                )}>
-                  {idx.positive
-                    ? <TrendingUp className="h-2.5 w-2.5" />
-                    : <TrendingDown className="h-2.5 w-2.5" />
-                  }
-                  {idx.pct}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <span className="flex-shrink-0 text-[10px] font-medium text-muted-foreground/40 select-none">
-          IST
-        </span>
-      </div>
+      )}
 
       {/* ── Main Header Row ── */}
       <div className="flex items-center justify-between gap-4 px-6 py-3">
@@ -127,22 +118,33 @@ export function Header() {
           </button>
 
           {/* Notifications */}
-          <button className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring">
+          <button
+            onClick={() => router.push("/dashboard/notifications")}
+            aria-label="Notifications"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
+          >
             <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white shadow-sm">
-              3
-            </span>
+            {!!unread && unread > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white shadow-sm">
+                {unread > 99 ? "99+" : unread}
+              </span>
+            )}
           </button>
 
           {/* User avatar */}
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-2.5 py-1.5">
+          <button
+            onClick={() => router.push("/dashboard/profile")}
+            className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-2.5 py-1.5 cursor-pointer hover:bg-muted"
+          >
             <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-[10px] font-bold text-white">
-              U
+              {initial}
             </div>
-            <span className="hidden md:inline text-xs font-semibold text-foreground">
-              Upender
-            </span>
-          </div>
+            {displayName && (
+              <span className="hidden md:inline text-xs font-semibold text-foreground">
+                {displayName}
+              </span>
+            )}
+          </button>
 
           {/* Logout */}
           <button

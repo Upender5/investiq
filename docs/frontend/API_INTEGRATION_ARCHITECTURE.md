@@ -65,8 +65,10 @@ Every service — 7 Spring Boot + 3 FastAPI — returns exactly:
 | `/dashboard/profile` | users/me | ✅ |
 | `/dashboard/unauthorized` | — (403 landing) | ✅ |
 
-### Admin subtree (`/dashboard/admin/*`, gated by `RoleGuard`) ⬜
-`/admin`, `/admin/users`, `/admin/kyc`, `/admin/audit`, `/admin/features`, `/admin/fraud` → `/api/v1/admin/*`.
+### Admin subtree (`/dashboard/admin/*`, gated by permission-aware `AdminLayout`) ✅
+`/admin` (metrics), `/admin/users` (search/filter/suspend), `/admin/kyc` (approve/reject), `/admin/fraud`
+(security audit signals), `/admin/features` (flag toggles, SUPER_ADMIN), `/admin/audit` (audit log) → `/api/v1/admin/*`.
+Hooks in `lib/hooks/use-admin.ts`; sidebar "Admin Console" entry shows only for staff roles.
 
 ---
 

@@ -10,21 +10,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SparkLine } from "@/components/charts/spark-line";
-
-const PNL_MONTHLY = [
-  { date: "2025-07-01", value: 3200 },
-  { date: "2025-08-01", value: -1200 },
-  { date: "2025-09-01", value: 5400 },
-  { date: "2025-10-01", value: 2800 },
-  { date: "2025-11-01", value: 8100 },
-  { date: "2025-12-01", value: 6400 },
-  { date: "2026-01-01", value: -2100 },
-  { date: "2026-02-01", value: 9200 },
-  { date: "2026-03-01", value: 11400 },
-  { date: "2026-04-01", value: 7800 },
-  { date: "2026-05-01", value: 13200 },
-  { date: "2026-06-01", value: 8900 },
-];
+import { usePnlHistory, useCapitalGains, useDashboardAnalytics } from "@/lib/hooks";
+import { formatINR } from "@/lib/format";
+import type { CapitalGain } from "@/types";
 
 const REPORT_CARDS = [
   {
@@ -69,15 +57,29 @@ const REPORT_CARDS = [
   },
 ];
 
-const SUMMARY_STATS = [
-  { label: "Total Profit (FY26)", value: "₹72,800", sub: "Realized gains", positive: true },
-  { label: "Total STCG Tax", value: "₹10,920", sub: "@15% on short-term", positive: false },
-  { label: "Total LTCG Tax", value: "₹0", sub: "Under ₹1L exemption", positive: true },
-  { label: "Net Returns", value: "+17.1%", sub: "Portfolio CAGR", positive: true },
-];
-
 export default function ReportsPage() {
   const [downloading, setDownloading] = useState<string | null>(null);
+
+  // Real data: monthly P&L (analytics), realized gains/tax (capital-gains), returns (dashboard).
+  const { data: pnlData } = usePnlHistory(365);
+  const pnlMonthly = pnlData ?? [];
+  const { data: gainsData } = useCapitalGains();
+  const gains = (gainsData as CapitalGain[] | undefined) ?? [];
+  const { data: analytics } = useDashboardAnalytics();
+
+  const totalRealized = gains.reduce((s, g) => s + g.gain, 0);
+  const totalSTCG = gains.filter((g) => g.gainType === "STCG").reduce((s, g) => s + g.gain, 0);
+  const totalLTCG = gains.filter((g) => g.gainType === "LTCG").reduce((s, g) => s + g.gain, 0);
+  const stcgTax = Math.max(0, totalSTCG * 0.15);
+  const ltcgTax = Math.max(0, (totalLTCG - 100000) * 0.1);
+  const netReturnPct = analytics?.totalPnlPercent ?? 0;
+
+  const summaryStats = [
+    { label: "Realized Gains (FY26)", value: formatINR(totalRealized), sub: "From closed positions", positive: totalRealized >= 0 },
+    { label: "STCG Tax", value: formatINR(stcgTax), sub: "@15% on short-term", positive: false },
+    { label: "LTCG Tax", value: formatINR(ltcgTax), sub: "@10% above ₹1L", positive: ltcgTax === 0 },
+    { label: "Net Returns", value: `${netReturnPct >= 0 ? "+" : ""}${netReturnPct.toFixed(1)}%`, sub: "Portfolio total return", positive: netReturnPct >= 0 },
+  ];
 
   function handleDownload(reportName: string) {
     setDownloading(reportName);
@@ -114,7 +116,7 @@ export default function ReportsPage() {
 
       {/* Summary stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {SUMMARY_STATS.map(({ label, value, sub, positive }) => (
+        {summaryStats.map(({ label, value, sub, positive }) => (
           <Card key={label} className="py-4">
             <p className="text-xs text-muted-foreground/80">{label}</p>
             <p className={`mt-1 text-xl font-bold ${positive ? "text-profit" : "text-loss"}`}>{value}</p>
@@ -130,12 +132,18 @@ export default function ReportsPage() {
           <Badge variant="info">July 2025 – June 2026</Badge>
         </CardHeader>
         <CardContent>
-          <SparkLine data={PNL_MONTHLY} height={120} showAxes={false} />
-          <div className="mt-3 flex justify-between text-xs text-muted-foreground/80">
-            <span>Jul 2025</span>
-            <span className="text-foreground font-medium">Total: ₹72,800 net profit</span>
-            <span>Jun 2026</span>
-          </div>
+          {pnlMonthly.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground/70">No P&L history yet.</p>
+          ) : (
+            <>
+              <SparkLine data={pnlMonthly} height={120} showAxes={false} />
+              <div className="mt-3 flex justify-between text-xs text-muted-foreground/80">
+                <span>{new Date(pnlMonthly[0].date).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}</span>
+                <span className="text-foreground font-medium">Realized: {formatINR(totalRealized)}</span>
+                <span>{new Date(pnlMonthly[pnlMonthly.length - 1].date).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}</span>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
