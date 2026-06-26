@@ -4,8 +4,8 @@ import { Providers } from "./providers";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 export const metadata: Metadata = {
-  title: "InvestIQ — Invest Smarter",
-  description: "AI-powered investment platform for the next generation of Indian investors",
+  title: "InvestIQ — Plant your first financial seed",
+  description: "AI-powered investment platform for the next generation of Indian investors. Calm over chaos. Learning over trading. Progress over perfection.",
 };
 
 export default function RootLayout({
