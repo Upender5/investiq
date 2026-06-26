@@ -3,10 +3,10 @@
 import { useRouter } from "next/navigation";
 import {
   TrendingUp, TrendingDown, BarChart3, ArrowLeftRight,
-  PlusCircle, MinusCircle, Wallet, Brain, Target,
+  PlusCircle, Wallet, Brain, Target,
   Sparkles, AlertTriangle, ChevronRight, Zap,
   Home, GraduationCap, Shield, Heart, Car, Plane,
-  Activity, Users, Clock,
+  Activity, Sprout, Trophy, Flame, Leaf,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -44,6 +44,27 @@ const INSIGHT_STYLES: Record<string, { icon: React.ElementType; color: string; b
   action:      { icon: Brain,         color: "text-ai",           bg: "bg-ai/10 border-ai/20" },
 };
 
+/* ── Gamification Level System ──
+ * UX Research Doc 10 — Section 4.3:
+ * Seedling → Sprout → Sapling → Explorer → Saver → Investor → Wealth Builder
+ */
+const LEVELS = [
+  { name: "Seedling",       icon: Leaf,   min: 0,      color: "text-emerald-400", bg: "bg-emerald-500/10" },
+  { name: "Sprout",         icon: Sprout, min: 100,    color: "text-green-400",   bg: "bg-green-500/10" },
+  { name: "Sapling",        icon: Sprout, min: 500,    color: "text-teal-400",    bg: "bg-teal-500/10" },
+  { name: "Explorer",       icon: Zap,    min: 2000,   color: "text-cyan-400",    bg: "bg-cyan-500/10" },
+  { name: "Saver",          icon: Trophy, min: 10000,  color: "text-blue-400",    bg: "bg-blue-500/10" },
+  { name: "Investor",       icon: TrendingUp, min: 50000, color: "text-indigo-400", bg: "bg-indigo-500/10" },
+  { name: "Wealth Builder", icon: Target, min: 100000, color: "text-violet-400",  bg: "bg-violet-500/10" },
+];
+
+function getLevel(totalSaved: number) {
+  for (let i = LEVELS.length - 1; i >= 0; i--) {
+    if (totalSaved >= LEVELS[i].min) return { ...LEVELS[i], next: LEVELS[i + 1] ?? null };
+  }
+  return { ...LEVELS[0], next: LEVELS[1] ?? null };
+}
+
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** Aggregate real trade history into per-weekday BUY/SELL counts for the volume chart. */
@@ -71,6 +92,15 @@ function tradeStatusBadge(status: string) {
     EXECUTED: "success", PENDING: "warning", CANCELLED: "secondary", REJECTED: "danger",
   };
   return <Badge variant={map[status] ?? "default"}>{status}</Badge>;
+}
+
+/* Goal milestone check — UX Research: celebrate at 25/50/75/100% */
+function getMilestone(pct: number): string | null {
+  if (pct >= 100) return "complete";
+  if (pct >= 75) return "75";
+  if (pct >= 50) return "50";
+  if (pct >= 25) return "25";
+  return null;
 }
 
 /* Custom tooltip for the bar chart */
@@ -107,31 +137,92 @@ export default function DashboardPage() {
   const weeklyVolume = buildWeeklyVolume(recentTrades ?? []);
   const hasVolume = weeklyVolume.some((d) => d.buy > 0 || d.sell > 0);
 
+  /* Gamification state */
+  const totalSaved = goals?.reduce((sum, g) => sum + (g.currentAmount ?? 0), 0) ?? 0;
+  const level = getLevel(totalSaved);
+  const LevelIcon = level.icon;
+  const streakDays = analytics?.savingsStreakDays ?? 0;
+  const coins = profile?.coins ?? 0;
+
   return (
     <div className="space-y-6 max-w-screen-2xl">
 
-      {/* ── Page Header ── */}
+      {/* ── Page Header ──
+       * UX Research: Calm, friendly greeting. Goals-first framing.
+       * "Good morning, [Name] — here's your progress today."
+       */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Good morning{firstName ? `, ${firstName}` : ""} 👋</h2>
+          <h2 className="text-2xl font-bold text-foreground font-editorial">
+            {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
+          </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Here&apos;s what&apos;s happening with your portfolio today.
+            Every forest starts with one seed. Keep growing.
           </p>
         </div>
+        {/* UX: Reframe from trading to goals — "Invest" not "Buy", "Add Funds" not "Add Money" */}
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="success" onClick={() => router.push("/dashboard/trades")}>
-            <PlusCircle className="h-4 w-4" /> Buy
-          </Button>
-          <Button size="sm" variant="danger" onClick={() => router.push("/dashboard/trades")}>
-            <MinusCircle className="h-4 w-4" /> Sell
+          <Button size="sm" variant="success" onClick={() => router.push("/dashboard/ai-advisor/goals")}>
+            <Target className="h-4 w-4 mr-1" /> Add to Goal
           </Button>
           <Button size="sm" variant="secondary" onClick={() => router.push("/dashboard/wallet")}>
-            <Wallet className="h-4 w-4" /> Add Funds
+            <Wallet className="h-4 w-4 mr-1" /> Add Funds
           </Button>
         </div>
       </div>
 
-      {/* ── KPI Stats Row ── */}
+      {/* ── Gamification Strip ──
+       * UX Research Section 4: Level, streak, and coins visible at a glance.
+       * Anti-Robinhood: progress and learning over trading stats.
+       */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {/* Level */}
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 card-hover">
+          <div className={twMerge("flex h-10 w-10 items-center justify-center rounded-xl", level.bg)}>
+            <LevelIcon className={twMerge("h-5 w-5", level.color)} />
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-muted-foreground/60">Level</p>
+            <p className={twMerge("text-sm font-bold", level.color)}>{level.name}</p>
+            {level.next && (
+              <p className="text-[10px] text-muted-foreground/50">
+                Next: {level.next.name} at {formatCompactINR(level.next.min)}
+              </p>
+            )}
+          </div>
+        </div>
+        {/* Streak */}
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 card-hover">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10">
+            <Flame className={twMerge("h-5 w-5", streakDays > 0 ? "text-orange-400" : "text-muted-foreground/30")} />
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-muted-foreground/60">Savings Streak</p>
+            <p className="text-sm font-bold text-foreground">
+              {streakDays > 0 ? `${streakDays} day${streakDays > 1 ? "s" : ""}` : "Start today"}
+            </p>
+            {streakDays > 0 && (
+              <p className="text-[10px] text-orange-400/70">Keep it going!</p>
+            )}
+          </div>
+        </div>
+        {/* Coins */}
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 card-hover">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-500/10">
+            <Trophy className="h-5 w-5 text-yellow-400" />
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-muted-foreground/60">Coins Earned</p>
+            <p className="text-sm font-bold text-yellow-400">{coins.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground/50">Learn & invest to earn more</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── KPI Stats Row — Goals-first framing ──
+       * UX: Portfolio value is shown, but goals progress is equally prominent.
+       * No aggressive profit/loss colours as the primary visual.
+       */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatsCard
           label="Portfolio Value"
@@ -142,46 +233,43 @@ export default function DashboardPage() {
           sparkData={sparkValues}
         />
         <StatsCard
-          label="Total P&L"
-          value={formatINR(totalPnl)}
-          change={totalPnlPercent}
-          changeLabel="all time"
-          icon={totalPnl >= 0 ? TrendingUp : TrendingDown}
-          iconColor={totalPnl >= 0 ? "text-profit" : "text-loss"}
-          iconBg={totalPnl >= 0 ? "bg-green-500/10" : "bg-red-500/10"}
-          sparkData={sparkValues}
+          label="Total Saved Toward Goals"
+          value={formatINR(totalSaved)}
+          icon={Target}
+          iconColor="text-ai"
+          iconBg="bg-ai/10"
         />
         <StatsCard
-          label="Today's P&L"
-          value={`${todayPnl >= 0 ? "+" : ""}${formatINR(todayPnl)}`}
+          label="Active Positions"
+          value={String(activePositions)}
           icon={Activity}
-          iconColor="text-warning"
-          iconBg="bg-amber-500/10"
+          iconColor="text-info"
+          iconBg="bg-blue-500/10"
         />
         <StatsCard
           label="Wallet Balance"
           value={formatINR(wallet?.available ?? 0)}
           icon={Wallet}
-          iconColor="text-info"
-          iconBg="bg-blue-500/10"
+          iconColor="text-coin"
+          iconBg="bg-yellow-500/10"
         />
       </div>
 
       {/* ── Main Bento Row: Chart + AI Insights ── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-        {/* P&L History — 2/3 width */}
+        {/* Portfolio Performance — 2/3 width */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <CardTitle>Portfolio Performance</CardTitle>
-              <Badge variant="info">FY 2025–26</Badge>
+              <CardTitle className="font-editorial">Portfolio Performance</CardTitle>
+              <Badge variant="info">FY 2025-26</Badge>
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span className={twMerge("font-semibold", totalPnl >= 0 ? "text-profit" : "text-loss")}>
                 {totalPnl >= 0 ? "+" : ""}{formatINR(totalPnl)}
               </span>
-              <span>·</span>
+              <span>/</span>
               <span className={totalPnlPercent >= 0 ? "text-profit" : "text-loss"}>
                 {totalPnlPercent >= 0 ? "+" : ""}{totalPnlPercent.toFixed(2)}%
               </span>
@@ -190,8 +278,8 @@ export default function DashboardPage() {
           <CardContent>
             <SparkLine data={pnlHistory} height={200} showAxes />
             <div className="mt-3 flex justify-between text-[11px] text-muted-foreground/60">
-              <span>{pnlHistory[0] ? formatDate(pnlHistory[0].date) : "—"}</span>
-              <span>{pnlHistory.length ? formatDate(pnlHistory[pnlHistory.length - 1].date) : "—"}</span>
+              <span>{pnlHistory[0] ? formatDate(pnlHistory[0].date) : "-"}</span>
+              <span>{pnlHistory.length ? formatDate(pnlHistory[pnlHistory.length - 1].date) : "-"}</span>
             </div>
           </CardContent>
         </Card>
@@ -199,7 +287,7 @@ export default function DashboardPage() {
         {/* AI Insights — 1/3 width */}
         <Card className="border-ai/20 bg-gradient-to-b from-ai/5 to-transparent">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2 text-base font-editorial">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-ai/15">
                 <Brain className="h-4 w-4 text-ai" />
               </div>
@@ -218,7 +306,7 @@ export default function DashboardPage() {
             {(insights ?? []).length === 0 ? (
               <div className="flex flex-col items-center py-8 text-muted-foreground/60">
                 <Sparkles className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-xs text-center">AI is analysing your portfolio…</p>
+                <p className="text-xs text-center">AI is analysing your portfolio...</p>
               </div>
             ) : (
               (insights ?? []).slice(0, 4).map((insight, i) => {
@@ -243,7 +331,7 @@ export default function DashboardPage() {
             <div className="mt-3 rounded-xl border border-border bg-secondary/30 px-3 py-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-foreground">Portfolio Health</span>
-                <span className="text-xs font-bold text-profit">{health?.overallScore ?? "—"}/100</span>
+                <span className="text-xs font-bold text-profit">{health?.overallScore ?? "-"}/100</span>
               </div>
               <Progress
                 value={health?.overallScore ?? 0}
@@ -269,54 +357,15 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ── Secondary Row: Trade Volume + Goals ── */}
+      {/* ── Secondary Row: Goal Progress (elevated) + Trade Volume ──
+       * UX: Goals are front-and-center. Trade volume is secondary data.
+       */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
-        {/* Weekly Trade Volume Bar Chart */}
+        {/* Goal Progress — UX primary feature */}
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-base">Weekly Trade Volume</CardTitle>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-sm bg-profit/70" /> Buy
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-sm bg-loss/70" /> Sell
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {!hasVolume && (
-              <p className="pb-2 text-xs text-muted-foreground/70">No trades this week yet.</p>
-            )}
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={weeklyVolume} barGap={2} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(215 25% 27% / 0.5)" vertical={false} />
-                <XAxis
-                  dataKey="day"
-                  tick={{ fill: "hsl(215 20% 65%)", fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  tick={{ fill: "hsl(215 20% 65%)", fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip content={<VolumeTooltip />} cursor={{ fill: "hsl(217 33% 17% / 0.5)", radius: 4 }} />
-                <Bar dataKey="buy" fill="#22c55e" fillOpacity={0.75} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="sell" fill="#ef4444" fillOpacity={0.75} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Goals Progress */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2 text-base font-editorial">
               <Target className="h-4 w-4 text-ai" />
               Goal Progress
             </CardTitle>
@@ -331,17 +380,24 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {(goals ?? []).length === 0 ? (
-              <div className="flex flex-col items-center py-8 text-muted-foreground/60">
-                <Target className="h-8 w-8 mb-2 opacity-30" />
-                <p className="text-xs text-center mb-3">No goals set yet</p>
+              /* UX Research Section 5: Empty state with specific copy */
+              <div className="flex flex-col items-center py-10 text-muted-foreground/60">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary/50">
+                  <Sparkles className="h-8 w-8 opacity-40" />
+                </div>
+                <p className="text-sm font-semibold text-foreground/70 mb-1">What are you dreaming of?</p>
+                <p className="text-xs text-center max-w-[240px] mb-4">
+                  A laptop? A trip? An emergency fund? Every goal starts with a first step.
+                </p>
                 <Button size="sm" variant="secondary" onClick={() => router.push("/dashboard/ai-advisor/goals")}>
-                  Create a Goal
+                  <Target className="h-3.5 w-3.5 mr-1" /> Create a Goal
                 </Button>
               </div>
             ) : (
               <div className="space-y-4">
                 {(goals ?? []).slice(0, 4).map((goal) => {
                   const Icon = GOAL_ICONS[goal.type] ?? Sparkles;
+                  const milestone = getMilestone(goal.progressPercent);
                   return (
                     <div key={goal.id} className="space-y-1.5">
                       <div className="flex items-center justify-between">
@@ -350,6 +406,11 @@ export default function DashboardPage() {
                             <Icon className="h-3.5 w-3.5 text-muted-foreground" />
                           </div>
                           <span className="text-sm font-medium text-foreground">{goal.name}</span>
+                          {milestone && (
+                            <Badge variant={milestone === "complete" ? "success" : "info"} className="text-[9px] px-1.5 py-0">
+                              {milestone === "complete" ? "Done!" : `${milestone}%`}
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-semibold text-foreground/70">
@@ -360,15 +421,67 @@ export default function DashboardPage() {
                           </span>
                         </div>
                       </div>
-                      <Progress
-                        value={goal.progressPercent}
-                        color={goal.onTrack ? "bg-green-500" : "bg-yellow-500"}
-                        size="md"
-                      />
+                      <div className={milestone ? "goal-celebrate rounded-full" : "rounded-full"}>
+                        <Progress
+                          value={goal.progressPercent}
+                          color={goal.onTrack ? "bg-green-500" : "bg-yellow-500"}
+                          size="md"
+                        />
+                      </div>
                     </div>
                   );
                 })}
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Weekly Trade Volume — secondary, calm presentation */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-editorial">Weekly Activity</CardTitle>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-sm bg-profit/70" /> Buy
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-sm bg-loss/70" /> Sell
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!hasVolume && (
+              /* UX Research empty state */
+              <div className="flex flex-col items-center py-8 text-muted-foreground/60">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/50">
+                  <Leaf className="h-6 w-6 opacity-40" />
+                </div>
+                <p className="text-sm font-medium text-foreground/60">No activity this week</p>
+                <p className="mt-1 text-xs text-muted-foreground/50 text-center max-w-[220px]">
+                  Your first investment plants a seed. Watch it grow over time.
+                </p>
+              </div>
+            )}
+            {hasVolume && (
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={weeklyVolume} barGap={2} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(215 25% 27% / 0.5)" vertical={false} />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fill: "hsl(215 20% 65%)", fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: "hsl(215 20% 65%)", fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip content={<VolumeTooltip />} cursor={{ fill: "hsl(217 33% 17% / 0.5)", radius: 4 }} />
+                  <Bar dataKey="buy" fill="hsl(var(--profit))" fillOpacity={0.6} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="sell" fill="hsl(var(--loss))" fillOpacity={0.6} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
@@ -402,7 +515,7 @@ export default function DashboardPage() {
       {/* ── Recent Trades ── */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 font-editorial">
             <ArrowLeftRight className="h-5 w-5 text-muted-foreground" />
             Recent Trades
           </CardTitle>
@@ -453,14 +566,17 @@ export default function DashboardPage() {
               </TableBody>
             </Table>
           ) : (
+            /* UX Research Section 5: Empty state for no trades */
             <div className="flex flex-col items-center py-14 text-muted-foreground/60">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-dashed border-border">
-                <ArrowLeftRight className="h-6 w-6 opacity-40" />
+                <Sprout className="h-7 w-7 opacity-40" />
               </div>
-              <p className="text-sm font-medium text-foreground/60">No recent trades</p>
-              <p className="mt-1 text-xs text-muted-foreground/50">Start investing to see your trade history</p>
+              <p className="text-sm font-semibold text-foreground/70">Every forest starts with one seed</p>
+              <p className="mt-1 text-xs text-muted-foreground/50 text-center max-w-[280px]">
+                Plant your first investment today and watch it grow toward your goals.
+              </p>
               <Button size="sm" className="mt-4" onClick={() => router.push("/dashboard/trades")}>
-                Place First Order
+                <Sprout className="h-4 w-4 mr-1" /> Place First Order
               </Button>
             </div>
           )}
