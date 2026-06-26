@@ -52,8 +52,16 @@ const config: Config = {
         info: "hsl(var(--info) / <alpha-value>)",
         profit: "hsl(var(--profit) / <alpha-value>)",
         loss: "hsl(var(--loss) / <alpha-value>)",
+        coin: "hsl(var(--coin) / <alpha-value>)",
+        "coin-foreground": "hsl(var(--coin-foreground) / <alpha-value>)",
         // Legacy alias kept for older pages
         danger: "hsl(var(--destructive) / <alpha-value>)",
+      },
+      fontFamily: {
+        /* UX Research Doc 10 — Section 7.2 */
+        editorial: ['"Playfair Display"', 'Georgia', '"Times New Roman"', 'serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', '"SF Mono"', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       borderRadius: {
         lg: "var(--radius)",
