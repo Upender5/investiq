@@ -1,5 +1,13 @@
-/* Google Fonts — Fira Sans (UI) + Fira Code (numbers/mono) */
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+/*
+ * InvestIQ Design System — UX Research v1.0 Compliant
+ * Fonts: Playfair Display (headings) + Inter (body/ui)
+ * Philosophy: "Calm over chaos. Learning over trading. Progress over perfection."
+ */
+
+/* ── Google Fonts ─────────────────────────────────────────────────────── */
+/* Playfair Display: editorial serif for headlines (H1, H2) */
+/* Inter: clean sans-serif for UI, body, buttons, data */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,12 +21,15 @@
  * fintech-specific additions: profit, loss, warning, info, ai.
  *
  * Light theme = :root, dark theme = .dark (default, set in app/layout.tsx).
+ *
+ * Aligned with UX Research Doc 10 — Section 7:
+ * https://github.com/Upender5/investiq/blob/main/docs/design/10-UX-Research.md
  */
 
 :root {
   /* Surfaces */
-  --background: 210 40% 98%;        /* slate-50 */
-  --foreground: 222 47% 11%;        /* slate-900 */
+  --background: 210 40% 98%;        /* #f9fafb slate-50 */
+  --foreground: 222 47% 11%;        /* #0f172a slate-900 */
   --card: 0 0% 100%;                /* white */
   --card-foreground: 222 47% 11%;
   --popover: 0 0% 100%;
@@ -35,66 +46,74 @@
   /* Lines & focus */
   --border: 214 32% 88%;            /* slate-200/300 */
   --input: 213 27% 80%;             /* slate-300 */
-  --ring: 145 100% 39%;             /* emerald #00C853 */
+  --ring: 160 84% 39%;              /* #10B981 emerald-500 (UX spec primary) */
 
-  /* Brand */
-  --primary: 145 100% 39%;          /* emerald #00C853 */
-  --primary-foreground: 222 47% 11%; /* deep charcoal — brand spec: dark text on green */
-  --ai: 142 71% 45%;                /* financial green #22C55E — AI surfaces & copy */
+  /* Brand — aligned with UX Research Section 7.1 */
+  --primary: 160 84% 39%;           /* #10B981 emerald-500 */
+  --primary-foreground: 0 0% 100%;  /* white on primary */
+  --ai: 142 71% 45%;                /* #22C55E emerald-600 — AI coach accent */
   --ai-foreground: 222 47% 11%;
 
   /* Status */
-  --destructive: 0 72% 51%;         /* red-600 */
+  --destructive: 0 72% 51%;         /* red-500 */
   --destructive-foreground: 0 0% 100%;
   --success: 142 76% 36%;           /* green-600 */
-  --warning: 32 95% 44%;            /* amber-600 */
+  --warning: 38 92% 50%;             /* amber-500 (UX spec accent) */
   --info: 217 91% 60%;              /* blue-500 */
 
   /* Money movement — distinct from generic success/destructive */
   --profit: 142 72% 29%;            /* green-700 for AA contrast on light */
   --loss: 0 74% 42%;                /* red-700 */
 
+  /* Gamification — coin/accent color per UX spec */
+  --coin: 38 92% 50%;               /* amber-500 */
+  --coin-foreground: 222 47% 11%;
+
   --radius: 0.75rem;
 }
 
 .dark {
-  /* Surfaces */
-  --background: 222 47% 11%;        /* slate-900 #0f172a */
-  --foreground: 210 40% 96%;        /* slate-100 */
-  --card: 217 33% 17%;              /* slate-800 #1e293b */
+  /* Surfaces — UX spec dark mode palette (Section 7.1) */
+  --background: 222 47% 11%;        /* #0f172a slate-900 */
+  --foreground: 210 40% 96%;        /* #f1f5f9 slate-100 */
+  --card: 217 33% 17%;              /* #1e293b slate-800 */
   --card-foreground: 210 40% 96%;
   --popover: 222 47% 11%;
   --popover-foreground: 210 40% 96%;
 
   /* Neutrals */
   --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;  /* slate-400 */
+  --muted-foreground: 215 20% 65%;  /* #94a3b8 slate-400 (UX spec text-secondary) */
   --secondary: 215 25% 27%;         /* slate-700 */
   --secondary-foreground: 210 40% 96%;
-  --accent: 217 33% 21%;            /* hover surface, slightly above card */
+  --accent: 217 33% 21%;            /* hover surface */
   --accent-foreground: 210 40% 96%;
 
   /* Lines & focus */
   --border: 215 25% 27%;            /* slate-700 */
   --input: 215 19% 35%;             /* slate-600 */
-  --ring: 142 71% 45%;
+  --ring: 158 64% 52%;              /* #34d399 emerald-400 (UX spec dark primary) */
 
-  /* Brand */
-  --primary: 142 71% 45%;           /* financial green #22C55E (brighter for dark bg) */
+  /* Brand — dark mode (UX spec) */
+  --primary: 158 64% 52%;           /* #34d399 emerald-400 */
   --primary-foreground: 222 47% 11%; /* deep charcoal */
-  --ai: 142 76% 55%;                /* emerald accent for AI on dark */
+  --ai: 158 64% 52%;                /* brighter emerald for AI on dark */
   --ai-foreground: 222 47% 11%;
 
   /* Status */
-  --destructive: 0 84% 60%;         /* red-500 */
+  --destructive: 0 84% 60%;         /* red-400 */
   --destructive-foreground: 0 0% 100%;
-  --success: 142 71% 45%;           /* green-500 */
-  --warning: 48 96% 53%;            /* yellow-400 */
+  --success: 142 71% 45%;           /* green-400 */
+  --warning: 45 93% 47%;             /* amber-400 */
   --info: 213 94% 68%;              /* blue-400 */
 
   /* Money movement */
   --profit: 142 69% 58%;            /* green-400 */
   --loss: 0 91% 71%;                /* red-400 */
+
+  /* Gamification */
+  --coin: 45 93% 47%;               /* amber-400 */
+  --coin-foreground: 222 47% 11%;
 }
 
 * {
@@ -104,21 +123,34 @@
   border-color: hsl(var(--border));
 }
 
+/* ── Typography System ──────────────────────────────────────────────────
+ * UX Research Doc 10 — Section 7.2:
+ * H1/H2: Playfair Display (editorial serif)
+ * Body/UI: Inter (clean sans-serif)
+ */
+
 html,
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: 'Fira Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Mono / numeric values use Fira Code */
-.font-mono, code, kbd, pre {
-  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+/* Editorial headings: Playfair Display */
+h1, h2, .font-editorial {
+  font-family: 'Playfair Display', Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
-/* Custom scrollbar */
+/* Mono / numeric values */
+.font-mono, code, kbd, pre {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+
+/* ── Custom Scrollbar ─────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;
@@ -134,7 +166,7 @@ body {
   background: hsl(var(--muted-foreground) / 0.4);
 }
 
-/* ─── Custom Utilities ──────────────────────────────────────────────────── */
+/* ─── Custom Utilities ───────────────────────────────────────────────── */
 @layer utilities {
   .glass {
     background: hsl(var(--card) / 0.65);
@@ -143,15 +175,15 @@ body {
     border: 1px solid hsl(var(--border) / 0.5);
   }
 
-  .text-gradient-indigo {
-    background: linear-gradient(135deg, #00C853 0%, #22C55E 100%);
+  .text-gradient-green {
+    background: linear-gradient(135deg, #34d399 0%, #22c55e 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .text-gradient-green {
-    background: linear-gradient(135deg, #4ade80 0%, #86efac 100%);
+  .text-gradient-editorial {
+    background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -164,28 +196,22 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px hsl(var(--primary) / 0.08);
   }
+
+  /* Goal milestone celebration ring */
+  .goal-celebrate {
+    animation: goal-pulse 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Calm progress transition — no jarring snaps */
+  .progress-calm {
+    transition: width 800ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
-/* ─── Animations ────────────────────────────────────────────────────────── */
-@keyframes ticker-scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.animate-ticker {
-  animation: ticker-scroll 50s linear infinite;
-  will-change: transform;
-}
-.animate-ticker:hover {
-  animation-play-state: paused;
-}
-
-@keyframes live-blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.25; }
-}
-.animate-live {
-  animation: live-blink 2s ease-in-out infinite;
-}
+/* ─── Animations ────────────────────────────────────────────────────────
+ * UX Research: "Calm over chaos" — all animations are gentle, purposeful.
+ * No flashing, no aggressive motion. Respect prefers-reduced-motion.
+ */
 
 @keyframes fade-in-up {
   from { opacity: 0; transform: translateY(6px); }
@@ -193,6 +219,12 @@ body {
 }
 .animate-fade-up {
   animation: fade-in-up 0.25s ease-out forwards;
+}
+
+@keyframes goal-pulse {
+  0%   { transform: scale(1); box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
+  50%  { transform: scale(1.02); box-shadow: 0 0 0 8px hsl(var(--primary) / 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
 }
 
 @keyframes shimmer {
@@ -208,4 +240,32 @@ body {
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ─── Reduced Motion ────────────────────────────────────────────────────
+ * UX Research Section 6.1: Respect user motion preferences
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-fade-up,
+  .animate-shimmer,
+  .goal-celebrate {
+    animation: none !important;
+  }
+
+  .card-hover:hover {
+    transform: none;
+  }
+
+  .progress-calm {
+    transition: none;
+  }
 }
