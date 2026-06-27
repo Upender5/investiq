@@ -2,6 +2,12 @@
  * InvestIQ Design System — UX Research v1.0 Compliant
  * Fonts: Playfair Display (headings) + Inter (body/ui)
  * Philosophy: "Calm over chaos. Learning over trading. Progress over perfection."
+ *
+ * Color Psychology (UX Research Doc 10 — Section 3.3 & 7.1):
+ *   Green (#10B981) = Goal progress  — NOT profit
+ *   Blue  (#3B82F6) = Stability      — used for P&L (calm framing)
+ *   Amber (#F59E0B) = Caution       — used for losses (warning, not panic)
+ *   Red   (#EF4444) = Errors only   — destructive actions
  */
 
 /* ── Google Fonts ─────────────────────────────────────────────────────── */
@@ -49,21 +55,25 @@
   --ring: 160 84% 39%;              /* #10B981 emerald-500 (UX spec primary) */
 
   /* Brand — aligned with UX Research Section 7.1 */
-  --primary: 160 84% 39%;           /* #10B981 emerald-500 */
+  --primary: 160 84% 39%;           /* #10B981 emerald-500 — goal progress */
   --primary-foreground: 0 0% 100%;  /* white on primary */
   --ai: 142 71% 45%;                /* #22C55E emerald-600 — AI coach accent */
   --ai-foreground: 222 47% 11%;
 
   /* Status */
-  --destructive: 0 72% 51%;         /* red-500 */
+  --destructive: 0 72% 51%;         /* #EF4444 red-500 — errors ONLY */
   --destructive-foreground: 0 0% 100%;
   --success: 142 76% 36%;           /* green-600 */
-  --warning: 38 92% 50%;             /* amber-500 (UX spec accent) */
-  --info: 217 91% 60%;              /* blue-500 */
+  --warning: 38 92% 50%;             /* #F59E0B amber-500 (UX spec accent) */
+  --info: 217 91% 60%;              /* #3B82F6 blue-500 (UX spec secondary) */
 
-  /* Money movement — distinct from generic success/destructive */
-  --profit: 142 72% 29%;            /* green-700 for AA contrast on light */
-  --loss: 0 74% 42%;                /* red-700 */
+  /* ── Color Psychology: UX Research Doc 10 — Section 3.3 ──
+   * Anti-Robinhood: Green is NOT profit. Green = goal progress.
+   * Blue = stability. Amber = caution (not aggressive red).
+   * Red is reserved for destructive errors only.
+   */
+  --profit: 217 91% 60%;            /* blue-500 — STABILITY framing for returns */
+  --loss: 38 92% 50%;               /* amber-500 — CAUTION (not panic red) */
 
   /* Gamification — coin/accent color per UX spec */
   --coin: 38 92% 50%;               /* amber-500 */
@@ -95,21 +105,21 @@
   --ring: 158 64% 52%;              /* #34d399 emerald-400 (UX spec dark primary) */
 
   /* Brand — dark mode (UX spec) */
-  --primary: 158 64% 52%;           /* #34d399 emerald-400 */
+  --primary: 158 64% 52%;           /* #34d399 emerald-400 — goal progress */
   --primary-foreground: 222 47% 11%; /* deep charcoal */
   --ai: 158 64% 52%;                /* brighter emerald for AI on dark */
   --ai-foreground: 222 47% 11%;
 
   /* Status */
-  --destructive: 0 84% 60%;         /* red-400 */
+  --destructive: 0 84% 60%;         /* #F87171 red-400 — errors ONLY */
   --destructive-foreground: 0 0% 100%;
   --success: 142 71% 45%;           /* green-400 */
   --warning: 45 93% 47%;             /* amber-400 */
   --info: 213 94% 68%;              /* blue-400 */
 
-  /* Money movement */
-  --profit: 142 69% 58%;            /* green-400 */
-  --loss: 0 91% 71%;                /* red-400 */
+  /* ── Color Psychology: Dark mode ── */
+  --profit: 213 94% 68%;            /* blue-400 — stability framing */
+  --loss: 45 93% 47%;               /* amber-400 — caution, not panic */
 
   /* Gamification */
   --coin: 45 93% 47%;               /* amber-400 */
