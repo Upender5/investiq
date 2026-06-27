@@ -34,6 +34,8 @@ export function BrandMark({
 /**
  * Full InvestIQ logo lockup — symbol + wordmark, with "IQ" set in the brand
  * accent. Use across app chrome (sidebar, auth screens, headers).
+ *
+ * UX Research: "Calm over chaos" — no blinking animations.
  */
 export function Logo({
   className,
@@ -48,7 +50,8 @@ export function Logo({
     <div className={twMerge("flex items-center gap-2.5", className)}>
       <span className="relative flex items-center justify-center rounded-xl bg-secondary/60 p-1.5 flex-shrink-0">
         <BrandMark size={markSize} />
-        <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-background animate-live" />
+        {/* Static indicator — no animate-live flashing per UX Research */}
+        <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-background" />
       </span>
       <div className="leading-tight">
         <span className="block text-base font-bold text-foreground tracking-tight">
