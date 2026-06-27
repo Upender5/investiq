@@ -1,13 +1,18 @@
 /**
- * Authorization-Code (redirect) social login for GitHub & Facebook.
+ * Authorization-Code (redirect) social login for Apple Sign-In.
  *
- * These providers issue opaque access tokens, so the SPA only carries the
- * authorization `code` back to `/login/callback`, which posts it to the backend
- * (`/auth/oauth/{provider}`) for a server-side exchange (client secret stays on the server).
- * Google is handled separately via Google Identity Services (ID token).
+ * Apple issues an opaque authorization code, so the SPA carries the code
+ * back to /login/callback, which posts it to the backend
+ * (/auth/oauth/apple) for a server-side exchange (client secret stays on
+ * the server). Google is handled separately via Google Identity Services
+ * (ID token).
+ *
+ * UX Research Doc 10 — Section 2.3: Social login limited to Google + Apple.
+ * No Facebook (no unique ID, depends on mailid/mobile number).
+ * No GitHub (not relevant for Indian college students).
  */
 
-export type CodeProvider = "github" | "facebook";
+export type CodeProvider = "apple";
 
 const STATE_KEY = "investiq_oauth_state";
 
@@ -21,8 +26,7 @@ export function getRedirectUri(): string {
 }
 
 export const PROVIDER_CLIENT_IDS: Record<CodeProvider, string | undefined> = {
-  github: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
-  facebook: process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID,
+  apple: process.env.NEXT_PUBLIC_APPLE_CLIENT_ID,
 };
 
 function randomNonce(): string {
@@ -31,7 +35,7 @@ function randomNonce(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Begin the redirect to the provider's consent screen. */
+/** Begin the redirect to Apple Sign-In consent screen. */
 export function startOAuthRedirect(provider: CodeProvider): void {
   const clientId = PROVIDER_CLIENT_IDS[provider];
   if (!clientId) return;
@@ -41,28 +45,20 @@ export function startOAuthRedirect(provider: CodeProvider): void {
   sessionStorage.setItem(STATE_KEY, nonce);
 
   const redirectUri = getRedirectUri();
-  const url =
-    provider === "github"
-      ? "https://github.com/login/oauth/authorize?" +
-        new URLSearchParams({
-          client_id: clientId,
-          redirect_uri: redirectUri,
-          scope: "read:user user:email",
-          state,
-        })
-      : "https://www.facebook.com/v19.0/dialog/oauth?" +
-        new URLSearchParams({
-          client_id: clientId,
-          redirect_uri: redirectUri,
-          scope: "email,public_profile",
-          response_type: "code",
-          state,
-        });
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: "name email",
+    state,
+    nonce,
+    response_mode: "query",
+  });
 
-  window.location.href = url;
+  window.location.href = `https://appleid.apple.com/auth/authorize?${params}`;
 }
 
-/** Validate the returned `state` and recover which provider initiated the flow. */
+/** Validate the returned state and recover which provider initiated the flow. */
 export function consumeOAuthState(rawState: string | null): CodeProvider | null {
   if (!rawState) return null;
   const stored = sessionStorage.getItem(STATE_KEY);
