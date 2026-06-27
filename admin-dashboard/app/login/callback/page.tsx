@@ -8,9 +8,11 @@ import { consumeOAuthState, getRedirectUri } from "@/lib/oauth";
 import type { AuthTokens } from "@/types";
 
 /**
- * OAuth redirect landing for GitHub/Facebook. Validates `state`, posts the
+ * OAuth redirect landing for Apple Sign-In. Validates `state`, posts the
  * authorization `code` to the backend for a server-side token exchange, stores the
  * returned InvestIQ tokens and continues into the app.
+ *
+ * UX Research Doc 10: Social login = Google + Apple only.
  */
 function OAuthCallback() {
   const router = useRouter();
@@ -55,7 +57,8 @@ function OAuthCallback() {
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-4 text-center">
       {error ? (
         <>
-          <p className="max-w-sm text-sm text-loss">{error}</p>
+          {/* Error uses text-destructive (red) — reserved for errors only per UX color psychology */}
+          <p className="max-w-sm text-sm text-destructive">{error}</p>
           <button
             onClick={() => router.replace("/login")}
             className="rounded-lg border border-input px-4 py-2 text-sm text-foreground hover:bg-accent"
