@@ -33,6 +33,15 @@ const otpSchema = z.object({
 type PhoneFormValues = z.infer<typeof phoneSchema>;
 type OtpFormValues = z.infer<typeof otpSchema>;
 
+/**
+ * OTP Login Form
+ *
+ * UX Research Doc 10 — Section 2.3 Onboarding Screens:
+ * - Screen 1: Welcome — "Plant your first financial seed"
+ * - Screen 2: Phone — auto-detect +91, large input
+ * - No Facebook login (no unique ID, depends on mailid/mobile)
+ * - Social: Google + Apple only
+ */
 export function OtpForm() {
   const router = useRouter();
   const [step, setStep] = useState<"phone" | "otp">("phone");
@@ -80,15 +89,18 @@ export function OtpForm() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
+        {/* ── Header — UX Research Section 2.3 ── */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0F172A]">
             <BrandMark size={36} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Invest<span className="text-primary">IQ</span>
+          {/* Editorial serif heading per UX Typography spec */}
+          <h1 className="text-2xl font-bold text-foreground font-editorial">
+            Plant your first financial seed
           </h1>
-          <p className="mt-1 text-muted-foreground">Admin Dashboard</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Start with ₹10. Learn as you grow.
+          </p>
         </div>
 
         <Card>
@@ -103,7 +115,7 @@ export function OtpForm() {
                     Sign In
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Enter your registered mobile number
+                    Enter your registered mobile number. We&apos;ll send you a code.
                   </p>
                 </div>
 
@@ -118,8 +130,9 @@ export function OtpForm() {
                   error={phoneForm.formState.errors.phone?.message}
                 />
 
+                {/* Error uses text-destructive (red) — reserved for errors only per UX color psychology */}
                 {serverError && (
-                  <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-loss">
+                  <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
                     {serverError}
                   </p>
                 )}
@@ -164,8 +177,9 @@ export function OtpForm() {
                   error={otpForm.formState.errors.otp?.message}
                 />
 
+                {/* Error uses text-destructive (red) — reserved for errors only */}
                 {serverError && (
-                  <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-loss">
+                  <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
                     {serverError}
                   </p>
                 )}
@@ -195,7 +209,9 @@ export function OtpForm() {
           </CardContent>
         </Card>
 
-        {/* Social login — only on the initial step */}
+        {/* ── Social login — only on the initial step ──
+         * UX Research: Google + Apple only. No Facebook (no unique ID).
+         */}
         {step === "phone" && (
           <div className="mt-5">
             <div className="flex items-center gap-3">
@@ -210,9 +226,9 @@ export function OtpForm() {
           </div>
         )}
 
+        {/* Footer — UX brand tagline */}
         <p className="mt-6 text-center text-xs text-muted-foreground/80">
-          InvestIQ · For Indian College Students · Investment decisions carry
-          risk
+          InvestIQ &middot; Calm over chaos. Learning over trading. Progress over perfection.
         </p>
       </div>
     </div>
